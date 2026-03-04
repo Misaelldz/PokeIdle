@@ -52,6 +52,7 @@ const PERMANENT_RATE = 0.006; // 0.6% for a permanent pool legendary
 const PITY_THRESHOLD = 100;
 const SHINY_RATE_NORMAL = 0.01; // 1%
 const SHINY_RATE_BOOSTED = 0.05; // 5%
+const SHINY_BANNER_LEGENDARY_RATE = 0.002; // 0.2%
 const EGG_MOVE_RATE = 0.2;
 
 interface Props {
@@ -205,6 +206,13 @@ export function GachaView({ onBack }: Props) {
               pity = 0;
             }
           }
+        } else {
+          // ── Shiny Banner: Legendary roll at 0.2% ──
+          if (Math.random() < SHINY_BANNER_LEGENDARY_RATE) {
+            const pool = PERMANENT_LEGENDARIES;
+            pulledId = pool[Math.floor(Math.random() * pool.length)];
+            isLegendary = true;
+          }
         }
 
         // ── Normal Pokémon roll ──
@@ -221,7 +229,8 @@ export function GachaView({ onBack }: Props) {
         }
 
         // ── Shiny roll ──
-        const isShiny = Math.random() < shinyRate;
+        let isShiny = Math.random() < shinyRate;
+        if (isShinyBanner && isLegendary) isShiny = true;
 
         // ── Fetch data ──
         const pokemonData = await getPokemonData(pulledId, 5, isShiny);
@@ -481,9 +490,10 @@ export function GachaView({ onBack }: Props) {
         <div className="text-[0.5rem] font-display text-muted italic text-center max-w-md leading-relaxed mb-4">
           {selectedBanner.isShinyBanner ? (
             <>
-              * Sin Legendarios en este banner. <br />*{" "}
+              * Legendarios disponibles (
+              <span className="text-accent">0.2%</span>) siempre Shiny. <br />*{" "}
               <span className="text-accent">5%</span> de prob. variocolor
-              (Shiny). <br />* 20% de prob. de movimiento huevo.
+              (Shiny) en normales. <br />* 20% de prob. de movimiento huevo.
             </>
           ) : (
             <>

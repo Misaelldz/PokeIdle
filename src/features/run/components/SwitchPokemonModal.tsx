@@ -19,7 +19,7 @@ export function SwitchPokemonModal({ onSelect }: Props) {
   );
 
   return (
-    <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className="absolute inset-0 z-100 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-surface-dark border-4 border-brand-deep w-full max-w-md flex flex-col shadow-2xl">
         <div className="bg-brand-deep p-3 border-b-2 border-brand">
           <h2 className="font-display text-white text-xs tracking-[0.2em] uppercase text-center">

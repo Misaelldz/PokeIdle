@@ -1,4 +1,4 @@
-import type { RegionId } from "../features/run/types/game.types";
+import type { RegionId, GymMechanic } from "../features/run/types/game.types";
 
 export interface ItemDrop {
   itemId: string;
@@ -27,6 +27,8 @@ export interface GymDefinition {
   pokemon: GymPokemon[];
   rewardItems: ItemDrop[];
   unlockLevel: number;
+  referenceBst: number;
+  mechanic: GymMechanic;
 }
 
 export interface Zone {
@@ -38,6 +40,7 @@ export interface Zone {
   itemDrops: ItemDrop[];
   trainerCount: number; // Number of trainers to defeat to clear zone
   battleBgId: string; // ID of the battle background to use
+  referenceBst: number; // Expected BST average to clear this zone
 }
 
 export interface EliteTrainer {
@@ -75,6 +78,7 @@ export const REGIONS: Record<RegionId, Region> = {
         encounterRate: 0.5,
         trainerCount: 2,
         battleBgId: "grass-route",
+        referenceBst: 280,
         itemDrops: [
           { itemId: "potion", chance: 0.1 },
           { itemId: "poke-ball", chance: 0.1 },
@@ -103,6 +107,7 @@ export const REGIONS: Record<RegionId, Region> = {
         encounterRate: 0.6,
         trainerCount: 4,
         battleBgId: "forest-green",
+        referenceBst: 310,
         itemDrops: [
           { itemId: "potion", chance: 0.2 },
           { itemId: "antidote", chance: 0.1 },
@@ -146,6 +151,7 @@ export const REGIONS: Record<RegionId, Region> = {
         encounterRate: 0.7,
         trainerCount: 6,
         battleBgId: "cave-dirt",
+        referenceBst: 340,
         itemDrops: [
           { itemId: "super-potion", chance: 0.15 },
           { itemId: "great-ball", chance: 0.1 },
@@ -189,6 +195,7 @@ export const REGIONS: Record<RegionId, Region> = {
         encounterRate: 0.8,
         trainerCount: 8,
         battleBgId: "cave-dirt",
+        referenceBst: 380,
         itemDrops: [
           { itemId: "hyper-potion", chance: 0.1 },
           { itemId: "ultra-ball", chance: 0.05 },
@@ -231,6 +238,8 @@ export const REGIONS: Record<RegionId, Region> = {
           { pokemonId: 95, level: 14 }, // Onix
         ],
         rewardItems: [{ itemId: "potion", chance: 1.0 }],
+        referenceBst: 300,
+        mechanic: "terreno_duro",
       },
       {
         id: 2,
@@ -243,6 +252,8 @@ export const REGIONS: Record<RegionId, Region> = {
           { pokemonId: 121, level: 21 }, // Starmie
         ],
         rewardItems: [{ itemId: "super-potion", chance: 1.0 }],
+        referenceBst: 330,
+        mechanic: "lluvia_constante",
       },
       {
         id: 3,
@@ -256,6 +267,8 @@ export const REGIONS: Record<RegionId, Region> = {
           { pokemonId: 26, level: 24 }, // Raichu
         ],
         rewardItems: [{ itemId: "super-potion", chance: 1.0 }],
+        referenceBst: 360,
+        mechanic: "campo_electrificado",
       },
       {
         id: 4,
@@ -269,6 +282,8 @@ export const REGIONS: Record<RegionId, Region> = {
           { pokemonId: 45, level: 29 }, // Vileplume
         ],
         rewardItems: [{ itemId: "hyper-potion", chance: 1.0 }],
+        referenceBst: 400,
+        mechanic: "esporas_aire",
       },
       {
         id: 5,
@@ -283,6 +298,8 @@ export const REGIONS: Record<RegionId, Region> = {
           { pokemonId: 110, level: 43 }, // Weezing
         ],
         rewardItems: [{ itemId: "hyper-potion", chance: 1.0 }],
+        referenceBst: 440,
+        mechanic: "niebla_toxica",
       },
       {
         id: 6,
@@ -297,6 +314,8 @@ export const REGIONS: Record<RegionId, Region> = {
           { pokemonId: 65, level: 43 }, // Alakazam
         ],
         rewardItems: [{ itemId: "hyper-potion", chance: 1.0 }],
+        referenceBst: 460,
+        mechanic: "inversion_stats",
       },
       {
         id: 7,
@@ -311,6 +330,8 @@ export const REGIONS: Record<RegionId, Region> = {
           { pokemonId: 59, level: 47 }, // Arcanine
         ],
         rewardItems: [{ itemId: "max-potion", chance: 1.0 }],
+        referenceBst: 500,
+        mechanic: "suelo_ardiente",
       },
       {
         id: 8,
@@ -326,6 +347,8 @@ export const REGIONS: Record<RegionId, Region> = {
           { pokemonId: 112, level: 50 }, // Rhydon
         ],
         rewardItems: [{ itemId: "max-potion", chance: 1.0 }],
+        referenceBst: 520,
+        mechanic: "gravedad_aumentada",
       },
     ],
     eliteFour: {

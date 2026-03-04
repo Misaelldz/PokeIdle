@@ -252,7 +252,7 @@ export async function fetchEggMoves(id: number): Promise<number[]> {
 export async function learnMovesOnLevelUp(
   pokemon: import("../types/game.types").ActivePokemon,
   newLevel: number,
-): Promise<import("../types/game.types").ActiveMove[] | null> {
+): Promise<import("../types/game.types").ActiveMove | null> {
   try {
     const data = await fetchJson(`${API_BASE}/pokemon/${pokemon.pokemonId}`);
 
@@ -305,14 +305,7 @@ export async function learnMovesOnLevelUp(
       statusEffect,
     };
 
-    // Replace the first (oldest) move if already have 4
-    const currentMoves = [...pokemon.moves];
-    if (currentMoves.length >= 4) {
-      currentMoves.shift(); // Remove oldest
-    }
-    currentMoves.push(newMove);
-
-    return currentMoves;
+    return newMove;
   } catch {
     return null;
   }

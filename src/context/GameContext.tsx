@@ -66,8 +66,10 @@ export const defaultRun: RunState = {
   maxWinStreak: 0,
   itemUsage: {},
   pendingLootSelection: null,
+  pendingMoveLearn: null,
   pendingZoneTransition: false,
   pinnedItems: [],
+  inheritanceProgress: {},
 };
 
 const defaultTrainingState: TrainingState = {

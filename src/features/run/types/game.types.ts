@@ -17,7 +17,25 @@ export interface PokemonStats {
   speed: number;
 }
 
+export interface InheritanceProgress {
+  pokemonId: number;
+  pokemonName: string;
+  ivs: Record<string, [number, number]>; // [old, new]
+  evs: Record<string, [number, number]>; // [old, new]
+  newNatures: string[];
+}
+
 export type StatusCondition = "BRN" | "PAR" | "PSN" | "TOX" | "SLP" | "FRZ";
+
+export type GymMechanic =
+  | "terreno_duro" // Brock
+  | "lluvia_constante" // Misty
+  | "campo_electrificado" // Surge
+  | "esporas_aire" // Erika
+  | "niebla_toxica" // Koga
+  | "inversion_stats" // Sabrina
+  | "suelo_ardiente" // Blaine
+  | "gravedad_aumentada"; // Giovanni
 
 export interface ActiveMove {
   moveId: number;
@@ -102,6 +120,7 @@ export interface BattleState {
   enemyPokemon: ActivePokemon;
   enemyTrainer?: EnemyTrainer;
   turnCount: number;
+  activeMechanic?: GymMechanic;
   manualActionQueue?: {
     type: "move" | "switch" | "item" | "equip";
     id: string;
@@ -114,6 +133,12 @@ export interface BattleState {
   bossCurrentBar?: number; // 1-indexed
 
   pendingManualSwitch?: boolean;
+}
+
+export interface MoveLearnData {
+  pokemonUid: string;
+  pokemonName: string;
+  newMove: ActiveMove;
 }
 
 export interface RunState {
@@ -159,6 +184,8 @@ export interface RunState {
   itemUsage: Record<string, number>; // slug -> count
 
   pendingLootSelection: string[] | null;
+  pendingMoveLearn: MoveLearnData | null;
   pendingZoneTransition: boolean;
   pinnedItems: string[]; // slug
+  inheritanceProgress: Record<number, InheritanceProgress>;
 }

@@ -2,6 +2,7 @@ import React from "react";
 import { useGame } from "../../../context/GameContext";
 import { ITEMS } from "../../../lib/items";
 import type { ActiveMove } from "../types/game.types";
+import { MoveCategoryBadge } from "../../../components/ui/MoveCategoryBadge";
 
 export function ManualBattleHUD() {
   const { run, setRun, training, setTraining } = useGame();
@@ -68,7 +69,7 @@ export function ManualBattleHUD() {
             key={move.moveId}
             disabled={hasQueuedAction || move.currentPP === 0}
             onClick={() => handleMoveSelect(String(move.moveId))}
-            className="bg-surface-alt border-2 border-border p-2 hover:border-brand-dark hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:border-border text-left relative group aspect-[3/1]"
+            className="bg-surface-alt border-2 border-border p-2 hover:border-brand-dark hover:translate-x-px hover:translate-y-px transition-all disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:border-border text-left relative group aspect-3/1"
           >
             <div className="flex justify-between items-center mb-1">
               <span className="font-display text-[0.55rem] uppercase text-foreground">
@@ -82,6 +83,7 @@ export function ManualBattleHUD() {
               <span className="text-[0.45rem] bg-surface-dark px-1.5 py-0.5 border border-border/50 uppercase font-body text-muted group-hover:text-foreground transition-colors">
                 {move.type}
               </span>
+              <MoveCategoryBadge category={move.category} size="xs" />
             </div>
             {hasQueuedAction &&
               battle.manualActionQueue?.id === String(move.moveId) && (

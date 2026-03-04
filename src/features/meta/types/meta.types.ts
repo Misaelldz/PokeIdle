@@ -1,4 +1,8 @@
-import type { RegionId, PokemonStats } from "../../run/types/game.types";
+import type {
+  InheritanceProgress,
+  RegionId,
+  PokemonStats,
+} from "../../run/types/game.types";
 
 export interface RunSummary {
   runId: string;
@@ -14,6 +18,7 @@ export interface RunSummary {
   maxLevel: number;
   duration: number; // ms
   reasonEnded: "defeat" | "victory" | "abandoned";
+  inheritanceProgress?: Record<number, InheritanceProgress>;
 }
 
 export interface UnlockedStarter {

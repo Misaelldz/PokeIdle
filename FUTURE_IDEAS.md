@@ -10,10 +10,17 @@ Este documento clasifica las tareas pendientes por su importancia estratégica p
 
 _Mejoras en sistemas existentes y feedback visual._
 
+2.  **Final de Run — Victoria en la Liga Pokémon:**
+    - Al ganar la Liga, la run termina y va al resumen post-run (mismo flujo que una run perdida, pero con pantalla de victoria diferenciada).
+    - Pantalla de victoria distinta al resumen normal — que se sienta como un logro real, no el mismo modal de derrota.
+    - Recompensa meta especial por ganar por primera vez: coins extra o tirada de gacha garantizada.
+    - En el historial de runs, marcar la run ganadora con un trofeo para distinguirla visualmente de las runs perdidas.
+
 3.  **Cambios Visuales y Fondos:**
     - Fondos específicos para cada zona, gimnasios, etc.
     - Animaciones de ataque y captura.
     - Animación de entrada de Pokémon inmediata en modo manual (sustituyendo la barra de carga).
+
 4.  **Adaptabilidad Mobile (Responsive):** Forzar orientación horizontal (Landscape) en móviles y corregir escalado de componentes.
 
 ## Prioridad Baja: Expansión de Sistemas
@@ -36,3 +43,8 @@ _Nuevas mecánicas y funcionalidades a largo plazo._
 - **UX**: Modal de tutorial inicial con opción de "No volver a mostrar".
 - **Lógica**: Corrección de errores de prioridad en el motor de combate.
 - **Auto-Botín**: Opción para recoger recompensas de forma automática.
+- **Sistema de Aprendizaje de Movimientos (Overflow)**: Interfaz de reemplazo de movimientos con pausa inteligente del motor y doble confirmación.
+- **Badges de Categoría de Movimientos**: Indicadores visuales de Físico, Especial y Estado en combate manual, gestor de equipo y modal de aprendizaje.
+- **Resumen Post-Run**: Pantalla de estadísticas al terminar una run.
+- **Mecánicas de Gimnasios**: Diseño de las 8 mecánicas ambientales de Kanto documentadas en GYM_MECHANICS.md.
+- **Escalado de Bosses**: Sistema de escalado dinámico de stats, IVs y naturaleza basado en BST promedio del equipo, documentado en BOSS_SCALING.md. Aplicado también a bosses de zona.

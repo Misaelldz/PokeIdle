@@ -32,6 +32,11 @@ import {
 import { ITEMS, generateLootOptions } from "../../../lib/items";
 import { generateUid } from "../../../utils/random";
 import type { ActiveMove, PokemonStats } from "../types/game.types";
+import {
+  calculateTeamBST,
+  getBossMultiplier,
+  scaleGymPokemon,
+} from "../../../engine/boss.engine";
 
 export function useEngineTick() {
   const { run, setRun, setMeta, notify } = useGame();
@@ -43,6 +48,7 @@ export function useEngineTick() {
       fetchingRef.current ||
       run.isPaused ||
       run.pendingLootSelection ||
+      run.pendingMoveLearn ||
       run.pendingZoneTransition
     )
       return;
@@ -81,6 +87,7 @@ export function useEngineTick() {
               maxLevel: Math.max(...run.team.map((p) => p.level), 0),
               duration: Date.now() - run.startedAt,
               reasonEnded: "defeat",
+              inheritanceProgress: run.inheritanceProgress,
             },
             ...m.runHistory,
           ],
@@ -119,6 +126,7 @@ export function useEngineTick() {
                 maxLevel: Math.max(...run.team.map((p) => p.level), 0),
                 duration: Date.now() - run.startedAt,
                 reasonEnded: "victory",
+                inheritanceProgress: run.inheritanceProgress,
               },
               ...m.runHistory,
             ],
@@ -153,23 +161,28 @@ export function useEngineTick() {
           const isBossTime = run.zoneBattlesWon >= requiredBattles;
           let enemy;
           let isBoss = false;
+          let activeMechanic = undefined;
 
           if (isBossTime) {
             const teamMaxLevel = Math.max(...run.team.map((p) => p.level), 5);
             const bossLevel = teamMaxLevel + 1; // More balanced
             const encounter = getWildEncounter(currentZone);
 
-            // Random IVs for Boss, plus a favorable nature
-            const forcedNature = "adamant";
-
-            enemy = await getPokemonData(
+            let baseEnemy = await getPokemonData(
               encounter.pokemonId,
               bossLevel,
               false,
-              undefined, // Generate random IVs dynamically in getPokemonData
-              forcedNature,
             );
-            enemy.name = `BOSS ${enemy.name}`;
+
+            // Dynamic Boss Scaling (using the zone's reference BST)
+            // Note: Route bosses do not trigger Gym Mechanics, so activeMechanic stays undefined.
+            const teamAverageBst = calculateTeamBST(run.team);
+            const multiplier = getBossMultiplier(
+              teamAverageBst,
+              currentZone.referenceBst || 280,
+            );
+
+            enemy = scaleGymPokemon(baseEnemy, multiplier, true);
             isBoss = true;
           } else {
             const encounter = getWildEncounter(currentZone);
@@ -194,6 +207,7 @@ export function useEngineTick() {
               enemyPokemon: enemy,
               turnCount: 0,
               isBossBattle: isBoss,
+              activeMechanic: activeMechanic,
               bossMaxBars: isBoss
                 ? run.gymsBadges.length === 0
                   ? 1
@@ -352,10 +366,18 @@ export function useEngineTick() {
       }
 
       if (!pMove && !usedManualTurn) {
-        pMove = chooseBestMove(bState.playerPokemon, bState.enemyPokemon);
+        pMove = chooseBestMove(
+          bState.playerPokemon,
+          bState.enemyPokemon,
+          bState.activeMechanic,
+        );
       }
 
-      const eMove = selectEnemyMove(bState.enemyPokemon, bState.playerPokemon);
+      const eMove = selectEnemyMove(
+        bState.enemyPokemon,
+        bState.playerPokemon,
+        bState.activeMechanic,
+      );
 
       if (!pMove && !usedManualTurn) {
         // En auto-battle, si no hay movimientos con PP, esperar a que el usuario cambie.
@@ -397,12 +419,41 @@ export function useEngineTick() {
       let nextEnemyHP = bState.enemyPokemon.currentHP;
       let nextPlayerHP = bState.playerPokemon.currentHP;
 
+      // --- ENTER COMBAT MECHANICS (Suelo Ardiente) ---
+      if (bState.activeMechanic === "suelo_ardiente") {
+        if (
+          !bState.playerPokemon.status &&
+          !bState.playerPokemon.types.some((t) =>
+            ["fire", "rock", "ground"].includes(t.toLowerCase()),
+          )
+        ) {
+          bState.playerPokemon.status = "BRN";
+          pushLog(
+            `¡El Suelo Ardiente quema a ${bState.playerPokemon.name}!`,
+            "danger",
+          );
+        }
+        if (
+          !bState.enemyPokemon.status &&
+          !bState.enemyPokemon.types.some((t) =>
+            ["fire", "rock", "ground"].includes(t.toLowerCase()),
+          )
+        ) {
+          bState.enemyPokemon.status = "BRN";
+          pushLog(
+            `¡El Suelo Ardiente quema a ${bState.enemyPokemon.name}!`,
+            "normal",
+          );
+        }
+      }
+
       // Determine turn order
       const order = determineAttackOrder(
         bState.playerPokemon,
         pMove,
         bState.enemyPokemon,
         eMove,
+        bState.activeMechanic,
       );
       const sequence = order === "player-first" ? ["p", "e"] : ["e", "p"];
 
@@ -410,6 +461,29 @@ export function useEngineTick() {
         if (actor === "p" && (!usedManualTurn || pMove)) {
           // --- PLAYER ATTACK PHASE ---
           let pCanAttack = true;
+
+          // Esporas en el Aire mechanic
+          if (
+            bState.activeMechanic === "esporas_aire" &&
+            !bState.playerPokemon.status
+          ) {
+            const isImmune = bState.playerPokemon.types.some((t) =>
+              ["poison", "steel"].includes(t.toLowerCase()),
+            );
+            const moveType = pMove?.type.toLowerCase();
+            const clearsSpores =
+              moveType === "fire" ||
+              moveType === "ice" ||
+              moveType === "poison";
+            if (!isImmune && !clearsSpores && Math.random() < 0.1) {
+              bState.playerPokemon.status = "SLP";
+              pushLog(
+                `¡Las Esporas en el Aire durmieron a ${bState.playerPokemon.name}!`,
+                "danger",
+              );
+            }
+          }
+
           // Status checks
           if (bState.playerPokemon.status === "SLP") {
             if (Math.random() < 0.3) {
@@ -452,6 +526,7 @@ export function useEngineTick() {
               bState.playerPokemon,
               bState.enemyPokemon,
               pMove!,
+              bState.activeMechanic,
             );
 
             const { nextHP, focusBandTriggered: pFocusTriggered } = applyDamage(
@@ -497,6 +572,22 @@ export function useEngineTick() {
                 };
                 pushLog(
                   `¡${bState.enemyPokemon.name} ha sido ${statusNames[pMove!.statusEffect.condition]} por el ataque!`,
+                  "normal",
+                );
+              }
+            }
+
+            // Campo Electrificado mechanic
+            if (
+              bState.activeMechanic === "campo_electrificado" &&
+              pMove!.category === "physical" &&
+              !bState.enemyPokemon.status &&
+              nextEnemyHP > 0
+            ) {
+              if (Math.random() < 0.15) {
+                bState.enemyPokemon.status = "PAR";
+                pushLog(
+                  `¡El Campo Electrificado paralizó a ${bState.enemyPokemon.name}!`,
                   "normal",
                 );
               }
@@ -592,30 +683,45 @@ export function useEngineTick() {
                 // Async: check if Pokémon learns a new move at this level
                 const leveledPlayer = { ...newPlayer };
                 const newLvl = newPlayer.level;
-                learnMovesOnLevelUp(leveledPlayer, newLvl).then(
-                  (updatedMoves) => {
-                    if (updatedMoves) {
-                      const newMoveName =
-                        updatedMoves[updatedMoves.length - 1].moveName;
-                      setRun((prev) => ({
+                learnMovesOnLevelUp(leveledPlayer, newLvl).then((newMove) => {
+                  if (newMove) {
+                    setRun((prev) => {
+                      const p = prev.team.find(
+                        (t) => t.uid === leveledPlayer.uid,
+                      );
+                      if (!p) return prev;
+
+                      // Check if already has 4 moves
+                      if (p.moves.length >= 4) {
+                        return {
+                          ...prev,
+                          pendingMoveLearn: {
+                            pokemonUid: p.uid,
+                            pokemonName: p.name,
+                            newMove,
+                          },
+                        };
+                      }
+
+                      // Else add automatically
+                      const updatedMoves = [...p.moves, newMove];
+                      return {
                         ...prev,
-                        team: prev.team.map((p) =>
-                          p.uid === leveledPlayer.uid
-                            ? { ...p, moves: updatedMoves }
-                            : p,
+                        team: prev.team.map((t) =>
+                          t.uid === p.uid ? { ...t, moves: updatedMoves } : t,
                         ),
                         battleLog: [
                           ...prev.battleLog,
                           {
                             id: generateUid(),
-                            text: `¡${leveledPlayer.name} aprendió ${newMoveName}!`,
+                            text: `¡${p.name} aprendió ${newMove.moveName}!`,
                             type: "level" as const,
                           },
                         ].slice(-40),
-                      }));
-                    }
-                  },
-                );
+                      };
+                    });
+                  }
+                });
               }
 
               nextState.team = nextState.team.map((p: any) =>
@@ -708,6 +814,29 @@ export function useEngineTick() {
         } else if (actor === "e" && nextEnemyHP > 0) {
           // --- ENEMY ATTACK PHASE ---
           let eCanAttack = true;
+
+          // Esporas en el Aire mechanic
+          if (
+            bState.activeMechanic === "esporas_aire" &&
+            !bState.enemyPokemon.status
+          ) {
+            const isImmune = bState.enemyPokemon.types.some((t) =>
+              ["poison", "steel"].includes(t.toLowerCase()),
+            );
+            const moveType = eMove?.type.toLowerCase();
+            const clearsSpores =
+              moveType === "fire" ||
+              moveType === "ice" ||
+              moveType === "poison";
+            if (!isImmune && !clearsSpores && Math.random() < 0.1) {
+              bState.enemyPokemon.status = "SLP";
+              pushLog(
+                `¡Las Esporas en el Aire durmieron a ${bState.enemyPokemon.name}!`,
+                "normal",
+              );
+            }
+          }
+
           if (bState.enemyPokemon.status === "SLP") {
             if (Math.random() < 0.3) {
               bState.enemyPokemon.status = null;
@@ -755,6 +884,7 @@ export function useEngineTick() {
               bState.enemyPokemon,
               bState.playerPokemon,
               eMove,
+              bState.activeMechanic,
             );
 
             const {
@@ -803,6 +933,22 @@ export function useEngineTick() {
                 );
               }
             }
+
+            // Campo Electrificado mechanic
+            if (
+              bState.activeMechanic === "campo_electrificado" &&
+              eMove.category === "physical" &&
+              !bState.playerPokemon.status &&
+              nextPlayerHP > 0
+            ) {
+              if (Math.random() < 0.15) {
+                bState.playerPokemon.status = "PAR";
+                pushLog(
+                  `¡El Campo Electrificado paralizó a ${bState.playerPokemon.name}!`,
+                  "danger",
+                );
+              }
+            }
           }
         }
 
@@ -811,6 +957,83 @@ export function useEngineTick() {
       } // End of Turns Loop
 
       // --- END OF TURN EFFECTS (Burn/Poison) ---
+
+      // Niebla Tóxica mechanic
+      if (bState.activeMechanic === "niebla_toxica") {
+        if (nextPlayerHP > 0) {
+          if (
+            bState.playerPokemon.types.some((t) =>
+              ["poison", "steel"].includes(t.toLowerCase()),
+            )
+          ) {
+            if (
+              bState.playerPokemon.types.some(
+                (t) => t.toLowerCase() === "poison",
+              )
+            ) {
+              const heal = Math.max(
+                1,
+                Math.floor(bState.playerPokemon.maxHP / 16),
+              );
+              nextPlayerHP = Math.min(
+                bState.playerPokemon.maxHP,
+                nextPlayerHP + heal,
+              );
+              pushLog(
+                `¡La Niebla Tóxica cura a ${bState.playerPokemon.name}!`,
+                "normal",
+              );
+            }
+          } else {
+            const dmg = Math.max(
+              1,
+              Math.floor(bState.playerPokemon.maxHP / 16),
+            );
+            nextPlayerHP = Math.max(0, nextPlayerHP - dmg);
+            pushLog(
+              `¡La Niebla Tóxica daña a ${bState.playerPokemon.name}!`,
+              "danger",
+            );
+          }
+        }
+        if (bState.enemyPokemon.currentHP > 0) {
+          if (
+            bState.enemyPokemon.types.some((t) =>
+              ["poison", "steel"].includes(t.toLowerCase()),
+            )
+          ) {
+            if (
+              bState.enemyPokemon.types.some(
+                (t) => t.toLowerCase() === "poison",
+              )
+            ) {
+              const heal = Math.max(
+                1,
+                Math.floor(bState.enemyPokemon.maxHP / 16),
+              );
+              bState.enemyPokemon.currentHP = Math.min(
+                bState.enemyPokemon.maxHP,
+                bState.enemyPokemon.currentHP + heal,
+              );
+              pushLog(
+                `¡La Niebla Tóxica cura a ${bState.enemyPokemon.name}!`,
+                "danger",
+              );
+            }
+          } else {
+            const dmg = Math.max(1, Math.floor(bState.enemyPokemon.maxHP / 16));
+            bState.enemyPokemon.currentHP = Math.max(
+              0,
+              bState.enemyPokemon.currentHP - dmg,
+            );
+            pushLog(
+              `¡La Niebla Tóxica daña a ${bState.enemyPokemon.name} enemigo!`,
+              "normal",
+            );
+          }
+        }
+      }
+
       if (nextPlayerHP > 0 && bState.playerPokemon.status === "BRN") {
         nextPlayerHP = Math.max(
           0,
@@ -1000,6 +1223,54 @@ export function useEngineTick() {
 
                 if (!updated) return m;
 
+                const pokemonId = bState.enemyPokemon.pokemonId;
+                const pokemonName = bState.enemyPokemon.name;
+                const runProgress = nextState.inheritanceProgress[
+                  pokemonId
+                ] || {
+                  pokemonId,
+                  pokemonName,
+                  ivs: {},
+                  evs: {},
+                  newNatures: [],
+                };
+
+                (
+                  [
+                    "hp",
+                    "attack",
+                    "defense",
+                    "spAtk",
+                    "spDef",
+                    "speed",
+                  ] as const
+                ).forEach((stat) => {
+                  if (bState.enemyPokemon.ivs[stat] > existing.maxIvs[stat]) {
+                    runProgress.ivs[stat] = [
+                      existing.maxIvs[stat],
+                      bState.enemyPokemon.ivs[stat],
+                    ];
+                  }
+                  if (bState.enemyPokemon.evs[stat] > existing.maxEvs[stat]) {
+                    runProgress.evs[stat] = [
+                      existing.maxEvs[stat],
+                      bState.enemyPokemon.evs[stat],
+                    ];
+                  }
+                });
+
+                if (
+                  !existing.unlockedNatures.includes(bState.enemyPokemon.nature)
+                ) {
+                  if (
+                    !runProgress.newNatures.includes(bState.enemyPokemon.nature)
+                  ) {
+                    runProgress.newNatures.push(bState.enemyPokemon.nature);
+                  }
+                }
+
+                nextState.inheritanceProgress[pokemonId] = runProgress;
+
                 return {
                   ...m,
                   unlockedStarters: m.unlockedStarters.map((s) =>
@@ -1032,6 +1303,27 @@ export function useEngineTick() {
                     lastShiny: shinyInfo,
                   };
                 }
+
+                const pokemonId = bState.enemyPokemon.pokemonId;
+                const pokemonName = bState.enemyPokemon.name;
+
+                nextState.inheritanceProgress[pokemonId] = {
+                  pokemonId,
+                  pokemonName,
+                  ivs: Object.fromEntries(
+                    Object.entries(bState.enemyPokemon.ivs).map(([k, v]) => [
+                      k,
+                      [0, v],
+                    ]),
+                  ),
+                  evs: Object.fromEntries(
+                    Object.entries(bState.enemyPokemon.evs).map(([k, v]) => [
+                      k,
+                      [0, v],
+                    ]),
+                  ),
+                  newNatures: [bState.enemyPokemon.nature],
+                };
 
                 return {
                   ...m,

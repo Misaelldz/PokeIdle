@@ -464,9 +464,31 @@ export function StarterSelector() {
                           className="flex justify-between font-display text-[0.55rem]"
                         >
                           <span className="text-muted">{lbl}</span>
-                          <span className="text-white">
-                            {previewStats[keys[i]] ?? 0}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-white">
+                              {previewStats[keys[i]] ?? 0}
+                            </span>
+                            {(() => {
+                              const lastProg =
+                                meta.runHistory[0]?.inheritanceProgress?.[
+                                  selectedId!
+                                ];
+                              if (!lastProg) return null;
+
+                              const k = keys[i];
+                              const ivDelta = lastProg.ivs[k];
+                              const evDelta = lastProg.evs[k];
+
+                              if (ivDelta || evDelta) {
+                                return (
+                                  <span className="text-accent animate-pulse">
+                                    ↑
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
                         </div>
                       );
                     })}

@@ -41,10 +41,70 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
     ? "indoor-gray"
     : (currentZone?.battleBgId ?? "indoor-gray");
 
+  const mechanicConfig: Record<
+    string,
+    { label: string; icon: string; color: string }
+  > = {
+    terreno_duro: {
+      label: "TERRENO DURO",
+      icon: "🪨",
+      color: "text-amber-500",
+    },
+    lluvia_constante: {
+      label: "LLUVIA CONSTANTE",
+      icon: "🌧️",
+      color: "text-blue-300",
+    },
+    campo_electrificado: {
+      label: "CAMPO ELECTRIFICADO",
+      icon: "⚡",
+      color: "text-yellow-400",
+    },
+    esporas_aire: {
+      label: "ESPORAS EN EL AIRE",
+      icon: "🍄",
+      color: "text-emerald-400",
+    },
+    niebla_toxica: {
+      label: "NIEBLA TÓXICA",
+      icon: "☠️",
+      color: "text-purple-400",
+    },
+    inversion_stats: {
+      label: "ESPACIO RARO",
+      icon: "🌀",
+      color: "text-fuchsia-400",
+    },
+    suelo_ardiente: {
+      label: "SUELO ARDIENTE",
+      icon: "🔥",
+      color: "text-orange-500",
+    },
+    gravedad_aumentada: {
+      label: "GRAVEDAD AUMENTADA",
+      icon: "🌍",
+      color: "text-stone-300",
+    },
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-surface-dark crt-screen relative overflow-hidden border-2 border-border border-b-0 min-h-[300px] z-0">
       {/* Background Sprite Sheet */}
       <BattleBackground backgroundId={bgId} className="absolute inset-0 z-0" />
+
+      {/* Active Mechanic Banner */}
+      {battle?.activeMechanic && mechanicConfig[battle.activeMechanic] && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/80 border-t border-b border-border px-4 py-1.5 shadow-pixel backdrop-blur-sm">
+          <span className="text-base animate-pulse">
+            {mechanicConfig[battle.activeMechanic].icon}
+          </span>
+          <span
+            className={`font-display text-[0.65rem] ${mechanicConfig[battle.activeMechanic].color} tracking-widest leading-none drop-shadow-md`}
+          >
+            {mechanicConfig[battle.activeMechanic].label}
+          </span>
+        </div>
+      )}
 
       {/* Background line */}
       <div className="absolute inset-x-0 top-[110px] h-px bg-border opacity-30 z-0"></div>

@@ -24,6 +24,7 @@ import { TrainingLayout } from "../../features/training/components/TrainingLayou
 import { GachaView } from "../../features/meta/components/GachaView";
 import { GlobalStatsView } from "../../features/meta/components/GlobalStatsView";
 import { GameTutorialModal } from "../../features/run/components/GameTutorialModal";
+import { MoveLearningModal } from "../../features/run/components/MoveLearningModal";
 
 export function GameLayout() {
   const {
@@ -122,6 +123,90 @@ export function GameLayout() {
               <span className="text-accent">{run.money}</span>
             </div>
           </div>
+
+          {/* Inheritance Progression */}
+          {Object.values(run.inheritanceProgress).length > 0 && (
+            <div className="mt-6 border-t border-border/30 pt-4 max-h-[150px] overflow-y-auto custom-scrollbar">
+              <h3 className="font-display text-[0.6rem] text-accent mb-3 tracking-[0.2em] uppercase">
+                PROGRESO HEREDADO
+              </h3>
+              <div className="flex flex-col gap-3">
+                {Object.values(run.inheritanceProgress).map((progress) => (
+                  <div key={progress.pokemonId} className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center bg-surface px-2 py-1 border-l-2 border-accent">
+                      <span className="font-display text-[0.55rem] text-white">
+                        {progress.pokemonName}
+                      </span>
+                    </div>
+                    {Object.entries(progress.ivs).map(
+                      ([stat, [oldV, newV]]) => (
+                        <div
+                          key={stat}
+                          className="flex justify-between font-body text-[0.5rem] px-2"
+                        >
+                          <span className="text-muted uppercase">
+                            {stat === "attack"
+                              ? "ATK"
+                              : stat === "defense"
+                                ? "DEF"
+                                : stat === "spAtk"
+                                  ? "S.ATK"
+                                  : stat === "spDef"
+                                    ? "S.DEF"
+                                    : stat === "speed"
+                                      ? "VEL"
+                                      : stat.toUpperCase()}{" "}
+                            IV:
+                          </span>
+                          <span className="text-white">
+                            {oldV} <span className="text-accent mx-1">→</span>{" "}
+                            {newV}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                    {Object.entries(progress.evs).map(
+                      ([stat, [oldV, newV]]) => (
+                        <div
+                          key={stat}
+                          className="flex justify-between font-body text-[0.5rem] px-2"
+                        >
+                          <span className="text-muted uppercase">
+                            {stat === "attack"
+                              ? "ATK"
+                              : stat === "defense"
+                                ? "DEF"
+                                : stat === "spAtk"
+                                  ? "S.ATK"
+                                  : stat === "spDef"
+                                    ? "S.DEF"
+                                    : stat === "speed"
+                                      ? "VEL"
+                                      : stat.toUpperCase()}{" "}
+                            EV:
+                          </span>
+                          <span className="text-white">
+                            {oldV} <span className="text-accent mx-1">→</span>{" "}
+                            {newV}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                    {progress.newNatures.length > 0 && (
+                      <div className="flex justify-between font-body text-[0.5rem] px-2">
+                        <span className="text-muted font-bold">
+                          NUEVAS NATURALEZAS:
+                        </span>
+                        <span className="text-white text-right">
+                          {progress.newNatures.length} UNLOCKED
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <button
             onClick={() => {
               resetRun();
@@ -165,6 +250,80 @@ export function GameLayout() {
               {run.totalBattlesWon}
             </span>
           </div>
+
+          {/* Inheritance Progression */}
+          {Object.values(run.inheritanceProgress).length > 0 && (
+            <div className="mt-6 border-t border-accent/20 pt-4 max-h-[180px] overflow-y-auto custom-scrollbar">
+              <h3 className="font-display text-[0.6rem] text-accent mb-3 tracking-[0.2em] uppercase">
+                PROGRESO HEREDADO
+              </h3>
+              <div className="flex flex-col gap-3">
+                {Object.values(run.inheritanceProgress).map((progress) => (
+                  <div key={progress.pokemonId} className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center bg-surface px-2 py-1 border-l-2 border-accent">
+                      <span className="font-display text-[0.55rem] text-white">
+                        {progress.pokemonName}
+                      </span>
+                    </div>
+                    {Object.entries(progress.ivs).map(
+                      ([stat, [oldV, newV]]) => (
+                        <div
+                          key={stat}
+                          className="flex justify-between font-body text-[0.5rem] px-2"
+                        >
+                          <span className="text-muted uppercase">
+                            {stat === "attack"
+                              ? "ATK"
+                              : stat === "defense"
+                                ? "DEF"
+                                : stat === "spAtk"
+                                  ? "S.ATK"
+                                  : stat === "spDef"
+                                    ? "S.DEF"
+                                    : stat === "speed"
+                                      ? "VEL"
+                                      : stat.toUpperCase()}{" "}
+                            IV:
+                          </span>
+                          <span className="text-white">
+                            {oldV} <span className="text-accent mx-1">→</span>{" "}
+                            {newV}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                    {Object.entries(progress.evs).map(
+                      ([stat, [oldV, newV]]) => (
+                        <div
+                          key={stat}
+                          className="flex justify-between font-body text-[0.5rem] px-2"
+                        >
+                          <span className="text-muted uppercase">
+                            {stat === "attack"
+                              ? "ATK"
+                              : stat === "defense"
+                                ? "DEF"
+                                : stat === "spAtk"
+                                  ? "S.ATK"
+                                  : stat === "spDef"
+                                    ? "S.DEF"
+                                    : stat === "speed"
+                                      ? "VEL"
+                                      : stat.toUpperCase()}{" "}
+                            EV:
+                          </span>
+                          <span className="text-white">
+                            {oldV} <span className="text-accent mx-1">→</span>{" "}
+                            {newV}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <button
             onClick={() => {
               resetRun();
@@ -263,6 +422,7 @@ export function GameLayout() {
 
         <div className="h-screen max-h-screen bg-black text-foreground flex flex-col md:flex-row overflow-hidden max-w-[1600px] mx-auto xl:border-x-4 border-border relative">
           <LootSelectionModal />
+          <MoveLearningModal />
 
           {/* Modals & Overlays */}
           <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
