@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useGame } from "../../../context/GameContext";
+import { useGame, defaultRun } from "../../../context/GameContext";
 import {
   getPokemonData,
   isStarterMaterial,
@@ -208,41 +208,18 @@ export function StarterSelector() {
       }
 
       setRun({
+        ...defaultRun,
         runId: Date.now().toString(),
         startedAt: Date.now(),
         isActive: true,
         starterId: pendingStarterId,
         starterName: pokemon.name,
         team: [pokemon],
-        pc: [] as any[],
-        currentRegion: "kanto",
-        currentZoneIndex: 0,
-        currentZoneProgress: 0,
-        zoneBattlesWon: 0,
-        gymsBadges: [],
-        eliteFourDefeated: false,
-        items: { "poke-ball": 10, potion: 5 },
-        speedMultiplier: 1,
         autoCapture: config.autoCapture,
         autoItems: config.autoItems,
-        autoHealThreshold: 0.3,
         autoLoot: !config.isManualBattle,
-        isPaused: false,
         isManualBattle: config.isManualBattle,
-        expMultiplier: 1.0,
-        hasMegaBracelet: false,
-        currentBattle: null,
-        battleLog: [] as any[],
-        totalBattlesWon: 0,
         totalCaptured: 1,
-        totalFainted: 0,
-        money: 0,
-        winStreak: 0,
-        maxWinStreak: 0,
-        itemUsage: {},
-        pendingLootSelection: null as string[] | null,
-        pendingZoneTransition: false,
-        pinnedItems: [] as string[],
       });
     } catch (e) {
       console.error("Error starting run:", e);
