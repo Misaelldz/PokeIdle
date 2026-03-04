@@ -12,7 +12,7 @@ export function LootSelectionModal() {
   const options = isTraining
     ? training.pendingLootSelection
     : run.pendingLootSelection;
-  const isAuto = !isTraining && !run.isManualBattle && run.autoLoot;
+  const isAuto = !isTraining && run.autoLoot;
 
   const handleSelect = (itemId: string) => {
     const item = ITEMS[itemId];
@@ -95,7 +95,7 @@ export function LootSelectionModal() {
 
       {!isAuto && (
         <p className="font-body text-[0.55rem] text-brand mb-4">
-          Modo Manual / Auto-Recompensa OFF: Elige tu recompensa.
+          Auto-Recompensa OFF: Elige tu recompensa.
         </p>
       )}
 

@@ -2,14 +2,9 @@
 
 Este documento clasifica las tareas pendientes por su importancia estratégica para el proyecto, priorizando la estabilidad de la interfaz y la experiencia de usuario (UX).
 
-## Prioridad Alta: Gestión de Shinies y UX
+## Prioridad Alta: UX y Lógica de Gacha
 
-_Mejorar el uso y feedback visual de los Pokémon Shinies desbloqueados._
-
-1.  **Gestión de Shinies (Selección):**
-    - Permitir elegir la apariencia (Normal/Shiny) en la selección de iniciales si se ha desbloqueado.
-    - Añadir indicador visual (estrella) en el sprite de selección del starter.
-2.  **Gacha de Shinies (Corrección de Lógica):** Asegurar que los legendarios obtenidos en este gacha sean siempre Shinies con una probabilidad muy menor.
+1.  **Gacha de Shinies (Corrección de Lógica):** Asegurar que los legendarios obtenidos en este gacha (Brillo Estelar) sean siempre Shinies con una probabilidad muy menor, en lugar de estar excluidos.
 
 ## Prioridad Media: Lógica de Juego y Visuales
 
@@ -32,4 +27,12 @@ _Nuevas mecánicas y funcionalidades a largo plazo._
     - Consumo automático de Bayas equipadas.
 7.  **Criterios de Progresión:** Desbloqueo de objetos en tienda (ej. Ultra Balls) condicionado a medallas u objetivos.
 8.  **Formas Alternas:** Soporte para cambios de forma por objetos (ej. Lustresfera).
-9.  **Entrenamiento Infinito (En Lluvia de Ideas):** Rediseño completo para mejorar balance y gratificación.
+
+## Completado Recientemente:
+
+- **Gestión de Shinies**: Implementada la selección de apariencia (Normal/Shiny) e indicadores visuales en la selección de iniciales.
+- **Sistema de Tienda**: Implementada compra de múltiples items con cantidades (+1, -1, Máx) y corregidos sprites de items.
+- **Batalla Manual**: Implementada selección manual de Pokémon al debilitarse y botón de cambio con confirmación.
+- **UX**: Modal de tutorial inicial con opción de "No volver a mostrar".
+- **Lógica**: Corrección de errores de prioridad en el motor de combate.
+- **Auto-Botín**: Opción para recoger recompensas de forma automática.

@@ -58,7 +58,6 @@ export function SwitchPokemonModal({ onSelect }: Props) {
                     currentHP={pokemon.currentHP}
                     maxHP={pokemon.maxHP}
                     showText={false}
-                    size="sm"
                   />
                   <div className="flex gap-1">
                     {pokemon.types.map((t) => (

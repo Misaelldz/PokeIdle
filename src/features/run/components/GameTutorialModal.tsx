@@ -48,9 +48,9 @@ export function GameTutorialModal({ onClose }: GameTutorialModalProps) {
       color: "text-hp",
     },
     {
-      title: "Controles de Acción",
+      title: "Controles de Automatización",
       description:
-        "Usa los botones de control para automatizar la run: Auto-Curación (mantiene tus Pokémon sanos), Auto-Captura y Batalla Manual.",
+        "Personaliza tu experiencia: Auto-Curación (usa pociones automáticamente al bajar del 30% de HP), Auto-Captura (lanza Poké Balls según disponibilidad), Auto-Botín (recoge recompensas aleatorias tras jefes) y Batalla Manual (decide cada movimiento tú mismo).",
       icon: <Settings2 size={48} />,
       color: "text-success",
     },

@@ -1,5 +1,6 @@
 import type { ActivePokemon } from "../features/run/types/game.types";
 import { type Item, ITEMS } from "../lib/items";
+import { calculateStats } from "./stats.engine";
 import {
   getPokemonData,
   getPokemonSpecies,
@@ -46,7 +47,13 @@ export async function useItemOnPokemon(
   }
 
   const itemDef = ITEMS[itemId];
-  if (!itemDef || (itemDef.category !== "heal" && itemDef.category !== "evo")) {
+  if (
+    !itemDef ||
+    (itemDef.category !== "heal" &&
+      itemDef.category !== "evo" &&
+      itemDef.category !== "special" &&
+      itemDef.category !== "battle")
+  ) {
     return {
       resultLog: `No puedes usar ${itemDef?.name || "este objeto"} así.`,
       success: false,
@@ -58,6 +65,104 @@ export async function useItemOnPokemon(
   let nextPokemon = { ...pokemon };
   let applied = false;
   let resultMsg = "";
+
+  if (itemDef.effect.type === "stat_boost") {
+    if (itemDef.category === "special") {
+      // Permanent Stat Boost (Vitamins -> EVs)
+      const stat = itemDef.effect.stat;
+      if (stat === "crit") {
+        return {
+          resultLog: "Este objeto no se puede usar así.",
+          success: false,
+          newPokemon: pokemon,
+          newInventory: inventory,
+        };
+      }
+
+      const currentEvs = nextPokemon.evs;
+      const totalEvs = Object.values(currentEvs).reduce(
+        (a: number, b: number) => a + b,
+        0,
+      );
+
+      if (currentEvs[stat] >= 252) {
+        return {
+          resultLog: `¡${nextPokemon.name} ya no puede mejorar más su ${stat}!`,
+          success: false,
+          newPokemon: pokemon,
+          newInventory: inventory,
+        };
+      }
+
+      if (totalEvs >= 510) {
+        return {
+          resultLog: `¡${nextPokemon.name} ha alcanzado su límite de esfuerzo!`,
+          success: false,
+          newPokemon: pokemon,
+          newInventory: inventory,
+        };
+      }
+
+      const amountToAdd = Math.min(10, 252 - currentEvs[stat], 510 - totalEvs);
+      nextPokemon.evs = {
+        ...currentEvs,
+        [stat]: currentEvs[stat] + amountToAdd,
+      };
+
+      // Recalculate stats
+      nextPokemon.stats = calculateStats(
+        nextPokemon.baseStats,
+        nextPokemon.ivs,
+        nextPokemon.evs,
+        nextPokemon.level,
+        nextPokemon.nature,
+      );
+      nextPokemon.maxHP = nextPokemon.stats.hp;
+
+      applied = true;
+      resultMsg = `¡El ${stat} de ${nextPokemon.name} aumentó permanentemente!`;
+    } else if (itemDef.category === "battle") {
+      // Battle Stat Boost (X Items -> Modifiers)
+      const stat = itemDef.effect.stat;
+      const stage = itemDef.effect.amount;
+
+      const map: Record<string, keyof ActivePokemon["statModifiers"]> = {
+        hp: "atk", // should not happen for X Items but just in case
+        attack: "atk",
+        defense: "def",
+        spAtk: "spa",
+        spDef: "spd",
+        speed: "spe",
+        crit: "crit",
+      };
+
+      const modKey = map[stat];
+      if (!modKey)
+        return {
+          resultLog: "Efecto no implementado.",
+          success: false,
+          newPokemon: pokemon,
+          newInventory: inventory,
+        };
+
+      if (nextPokemon.statModifiers[modKey] >= 6) {
+        return {
+          resultLog: `¡${nextPokemon.name} no puede subir más esa estadística!`,
+          success: false,
+          newPokemon: pokemon,
+          newInventory: inventory,
+        };
+      }
+
+      nextPokemon.statModifiers = {
+        ...nextPokemon.statModifiers,
+        [modKey]: Math.min(6, nextPokemon.statModifiers[modKey] + stage),
+      };
+
+      applied = true;
+      resultMsg = `¡${nextPokemon.name} subió su estadística en batalla!`;
+    }
+  }
 
   if (itemDef.effect.type === "heal_hp") {
     if (nextPokemon.currentHP === 0) {

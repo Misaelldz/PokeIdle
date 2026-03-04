@@ -28,7 +28,7 @@ export type ItemEffect =
       targetPokemonId?: number;
       method?: "stone" | "trade" | "item";
     }
-  | { type: "stat_boost"; stat: keyof PokemonStats; amount: number }
+  | { type: "stat_boost"; stat: keyof PokemonStats | "crit"; amount: number }
   | { type: "xp_boost"; multiplier: number }
   | { type: "mega_evo"; stoneId: string }
   | { type: "pp_restore"; amount: number | "full" }
@@ -700,7 +700,7 @@ export const ITEMS: Record<string, Item> = {
     spriteSlug: "x-attack",
     description: "Sube el Ataque en combate.",
     category: "battle",
-    effect: { type: "stat_boost", stat: "attack", amount: 1.5 },
+    effect: { type: "stat_boost", stat: "attack", amount: 1 },
     buyable: true,
     shopPrice: 500,
   },
@@ -710,7 +710,7 @@ export const ITEMS: Record<string, Item> = {
     spriteSlug: "x-defense",
     description: "Sube la Defensa en combate.",
     category: "battle",
-    effect: { type: "stat_boost", stat: "defense", amount: 1.5 },
+    effect: { type: "stat_boost", stat: "defense", amount: 1 },
     buyable: true,
     shopPrice: 550,
   },
@@ -720,7 +720,7 @@ export const ITEMS: Record<string, Item> = {
     spriteSlug: "x-sp-atk",
     description: "Sube el Ataque Especial en combate.",
     category: "battle",
-    effect: { type: "stat_boost", stat: "spAtk", amount: 1.5 },
+    effect: { type: "stat_boost", stat: "spAtk", amount: 1 },
     buyable: true,
     shopPrice: 350,
   },
@@ -730,7 +730,7 @@ export const ITEMS: Record<string, Item> = {
     spriteSlug: "x-sp-def",
     description: "Sube la Defensa Especial en combate.",
     category: "battle",
-    effect: { type: "stat_boost", stat: "spDef", amount: 1.5 },
+    effect: { type: "stat_boost", stat: "spDef", amount: 1 },
     buyable: true,
     shopPrice: 350,
   },
@@ -740,7 +740,7 @@ export const ITEMS: Record<string, Item> = {
     spriteSlug: "x-speed",
     description: "Sube la Velocidad en combate.",
     category: "battle",
-    effect: { type: "stat_boost", stat: "speed", amount: 1.5 },
+    effect: { type: "stat_boost", stat: "speed", amount: 1 },
     buyable: true,
     shopPrice: 350,
   },
@@ -760,7 +760,7 @@ export const ITEMS: Record<string, Item> = {
     spriteSlug: "dire-hit",
     description: "Aumenta la probabilidad de golpe crítico en combate.",
     category: "battle",
-    effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
+    effect: { type: "stat_boost", stat: "crit", amount: 1 },
     buyable: true,
     shopPrice: 650,
   },

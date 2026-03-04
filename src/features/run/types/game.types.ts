@@ -62,6 +62,7 @@ export interface ActivePokemon {
     spe: number;
     acc: number;
     eva: number;
+    crit: number;
   };
   heldItem: string | null;
   isShiny: boolean;

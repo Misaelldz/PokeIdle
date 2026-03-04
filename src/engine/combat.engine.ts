@@ -99,8 +99,12 @@ export function calculateDamage(
   const effectiveness = getEffectiveness(move.type, defender.types);
   damage = Math.floor(damage * effectiveness);
 
-  // Critical hit (1/24 chance ~ 4.17%)
-  const isCrit = Math.random() < 1 / 24;
+  // Critical hit scaling (Gen 6+)
+  const critStage = attacker.statModifiers.crit || 0;
+  const critProbabilities = [1 / 24, 1 / 8, 1 / 2, 1];
+  const critChance = critProbabilities[Math.min(critStage, 3)];
+
+  const isCrit = Math.random() < critChance;
   if (isCrit) {
     damage = Math.floor(damage * 1.5);
   }

@@ -214,7 +214,7 @@ export function StarterSelector() {
         starterId: pendingStarterId,
         starterName: pokemon.name,
         team: [pokemon],
-        pc: [],
+        pc: [] as any[],
         currentRegion: "kanto",
         currentZoneIndex: 0,
         currentZoneProgress: 0,
@@ -226,22 +226,23 @@ export function StarterSelector() {
         autoCapture: config.autoCapture,
         autoItems: config.autoItems,
         autoHealThreshold: 0.3,
+        autoLoot: !config.isManualBattle,
+        isPaused: false,
+        isManualBattle: config.isManualBattle,
+        expMultiplier: 1.0,
+        hasMegaBracelet: false,
         currentBattle: null,
-        battleLog: [],
-        totalCaptured: 1,
+        battleLog: [] as any[],
         totalBattlesWon: 0,
+        totalCaptured: 1,
         totalFainted: 0,
         money: 0,
         winStreak: 0,
         maxWinStreak: 0,
         itemUsage: {},
-        expMultiplier: 1.0,
-        hasMegaBracelet: false,
-        isPaused: false,
-        isManualBattle: config.isManualBattle,
-        pendingLootSelection: null,
+        pendingLootSelection: null as string[] | null,
         pendingZoneTransition: false,
-        pinnedItems: [],
+        pinnedItems: [] as string[],
       });
     } catch (e) {
       console.error("Error starting run:", e);
@@ -434,7 +435,7 @@ export function StarterSelector() {
               <div className="flex flex-col items-center gap-2 mb-4">
                 <div className="relative p-4 bg-surface-dark border-2 border-border shadow-inner group transition-colors">
                   <PixelSprite
-                    pokemonId={selectedId}
+                    pokemonId={selectedId || 0}
                     variant="front"
                     shiny={useShiny}
                     size={80}
