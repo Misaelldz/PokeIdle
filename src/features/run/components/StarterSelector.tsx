@@ -8,6 +8,7 @@ import { PixelSprite } from "../../../components/ui/PixelSprite";
 import { calculateStats, NATURES } from "../../../engine/stats.engine";
 import { clsx } from "clsx";
 import { Play } from "lucide-react";
+import { StartConfigModal } from "./StartConfigModal";
 
 const STAT_LABELS = ["HP", "ATK", "DEF", "SPE", "SPD", "SPA"];
 const RadarChart = ({
@@ -111,6 +112,8 @@ export function StarterSelector() {
   const [selectedNature, setSelectedNature] = useState<string>("hardy");
   const [previewStats, setPreviewStats] = useState<any>(null);
   const [validIds, setValidIds] = useState<number[]>([]);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [pendingStarterId, setPendingStarterId] = useState<number | null>(null);
 
   // Filter valid IDs for the current generation
   useEffect(() => {
@@ -170,12 +173,23 @@ export function StarterSelector() {
   }, [selectedId, selectedNature, meta.unlockedStarters]);
 
   const handleStart = async (starterId: number) => {
+    setPendingStarterId(starterId);
+    setConfigModalOpen(true);
+  };
+
+  const onFinalizeStart = async (config: {
+    isManualBattle: boolean;
+    autoCapture: boolean;
+    autoItems: boolean;
+  }) => {
+    if (!pendingStarterId) return;
     setLoading(true);
+    setConfigModalOpen(false);
     try {
-      const pokemon = await getPokemonData(starterId, 5);
+      const pokemon = await getPokemonData(pendingStarterId, 5);
 
       const unlockedData = meta.unlockedStarters.find(
-        (s) => s.id === starterId,
+        (s) => s.id === pendingStarterId,
       );
       if (unlockedData) {
         pokemon.ivs = unlockedData.maxIvs;
@@ -196,7 +210,7 @@ export function StarterSelector() {
         runId: Date.now().toString(),
         startedAt: Date.now(),
         isActive: true,
-        starterId,
+        starterId: pendingStarterId,
         starterName: pokemon.name,
         team: [pokemon],
         pc: [],
@@ -208,8 +222,8 @@ export function StarterSelector() {
         eliteFourDefeated: false,
         items: { "poke-ball": 10, potion: 5 },
         speedMultiplier: 1,
-        autoCapture: true,
-        autoItems: true,
+        autoCapture: config.autoCapture,
+        autoItems: config.autoItems,
         autoHealThreshold: 0.3,
         currentBattle: null,
         battleLog: [],
@@ -223,7 +237,7 @@ export function StarterSelector() {
         expMultiplier: 1.0,
         hasMegaBracelet: false,
         isPaused: false,
-        isManualBattle: false,
+        isManualBattle: config.isManualBattle,
         pendingLootSelection: null,
         pendingZoneTransition: false,
         pinnedItems: [],
@@ -517,6 +531,13 @@ export function StarterSelector() {
           )}
         </aside>
       </div>
+      {configModalOpen && pendingStarterId && (
+        <StartConfigModal
+          starterName={selectedStarterName}
+          onSelect={onFinalizeStart}
+          onCancel={() => setConfigModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

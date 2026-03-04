@@ -17,11 +17,13 @@ import { EventToast } from "../../components/ui/EventToast";
 import { LootSelectionModal } from "../../features/run/components/LootSelectionModal";
 import { BagModal } from "../../features/run/components/BagModal";
 import { ZoneTransitionModal } from "../../features/run/components/ZoneTransitionModal";
+import { ITEMS } from "../../lib/items";
 
 import { TrainingSelector } from "../../features/training/components/TrainingSelector";
 import { TrainingLayout } from "../../features/training/components/TrainingLayout";
 import { GachaView } from "../../features/meta/components/GachaView";
 import { GlobalStatsView } from "../../features/meta/components/GlobalStatsView";
+import { GameTutorialModal } from "../../features/run/components/GameTutorialModal";
 
 export function GameLayout() {
   const {
@@ -31,6 +33,7 @@ export function GameLayout() {
     training,
     setTraining,
     meta,
+    setMeta,
     notifications,
     removeNotification,
   } = useGame();
@@ -44,16 +47,39 @@ export function GameLayout() {
     | "stats"
   >("main");
   const [isBagOpen, setIsBagOpen] = React.useState(false);
+  const [showTutorial, setShowTutorial] = React.useState(false);
+
+  // Expose bag control to window for other components (like TeamRoster)
+  React.useEffect(() => {
+    (window as any).openBag = () => setIsBagOpen(true);
+    return () => {
+      delete (window as any).openBag;
+    };
+  }, []);
 
   // Synchronize component state with game context
   React.useEffect(() => {
     if (run.isActive && currentScreen === "starter") {
       setCurrentScreen("game");
+
+      // Trigger tutorial if not hidden and pause
+      if (!meta.hideTutorial) {
+        setShowTutorial(true);
+        setRun((prev) => ({ ...prev, isPaused: true }));
+      }
     }
     if (training.isActive && currentScreen === "training-select") {
       setCurrentScreen("training");
     }
-  }, [run.isActive, training.isActive, currentScreen]);
+  }, [run.isActive, currentScreen, meta.hideTutorial, setRun]);
+
+  const handleCloseTutorial = (hideForever: boolean) => {
+    setShowTutorial(false);
+    setRun((prev) => ({ ...prev, isPaused: false }));
+    if (hideForever) {
+      setMeta((prev) => ({ ...prev, hideTutorial: true }));
+    }
+  };
 
   // Defeat Screen
   if (
@@ -226,18 +252,6 @@ export function GameLayout() {
           </div>
           <div className="w-64 shrink-0 flex justify-end gap-2">
             <button
-              onClick={() => setIsBagOpen(true)}
-              className="flex items-center justify-center bg-surface-alt border-2 border-border cursor-pointer hover:bg-surface-light hover:border-brand transition-colors p-1"
-              title="Abrir Mochila"
-            >
-              <img
-                src="/sprites/Bag.png"
-                alt="Bag"
-                className="w-6 h-6 object-contain render-pixelated"
-              />
-            </button>
-
-            <button
               onClick={() => setRun((p) => ({ ...p, isPaused: true }))}
               className="flex items-center justify-center p-2 bg-surface-alt border-2 border-border cursor-pointer hover:bg-surface-light hover:text-accent transition-colors"
               title="Pausar Juego"
@@ -274,10 +288,50 @@ export function GameLayout() {
           </div>
 
           {/* Right Panel */}
-          <div className="flex-1 md:w-[320px] md:max-w-[320px] border-l border-border bg-surface overflow-y-auto hidden md:flex flex-col">
-            <ZoneView />
-            <ItemBag />
-            <BattleLog />
+          <div className="flex-1 md:w-[320px] md:max-w-[320px] border-l border-border bg-surface overflow-hidden hidden md:flex flex-col">
+            <div className="flex-none flex flex-col border-b-2 border-border bg-surface">
+              <ZoneView />
+              <ItemBag />
+
+              {/* Persistent Ball Inventory Bar */}
+              <div className="bg-surface-dark border-t-2 border-border p-3 px-4 flex items-center shadow-inner min-h-[48px]">
+                <div className="flex flex-wrap items-center gap-4">
+                  {Object.entries(run.items)
+                    .filter(
+                      ([id, qty]) =>
+                        (qty as number) > 0 && ITEMS[id]?.category === "ball",
+                    )
+                    .map(([id, qty]) => (
+                      <div
+                        key={id}
+                        className="flex items-center gap-1.5 grayscale-[0.2] hover:grayscale-0 transition-all group"
+                        title={ITEMS[id]?.name}
+                      >
+                        <img
+                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${id}.png`}
+                          alt={id}
+                          className="w-6 h-6 rendering-pixelated group-hover:scale-110 transition-transform"
+                        />
+                        <span className="font-display text-[0.7rem] text-foreground font-bold">
+                          x{qty as number}
+                        </span>
+                      </div>
+                    ))}
+                  {Object.entries(run.items).filter(
+                    ([id, qty]) =>
+                      (qty as number) > 0 && ITEMS[id]?.category === "ball",
+                  ).length === 0 && (
+                    <span className="font-body text-[0.6rem] text-muted italic uppercase tracking-tighter">
+                      Sin Poké Balls disponibles
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 min-h-0 flex flex-col bg-surface-dark/30">
+              <BattleLog />
+            </div>
           </div>
 
           {/* Mobile Disclaimer */}
@@ -290,6 +344,7 @@ export function GameLayout() {
       {/* OVERLAYS ROOT */}
       {isBagOpen && <BagModal onClose={() => setIsBagOpen(false)} />}
       <ZoneTransitionModal />
+      {showTutorial && <GameTutorialModal onClose={handleCloseTutorial} />}
     </>
   );
 }

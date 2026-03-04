@@ -45,4 +45,5 @@ export interface MetaState {
   capturedUniqueIds: number[];
   totalItemsUsed: Record<string, number>; // category -> count
   gachaPity: Record<string, number>; // bannerId -> pulls since last legendary
+  hideTutorial?: boolean;
 }

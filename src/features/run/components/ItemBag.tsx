@@ -103,82 +103,65 @@ export function ItemBag() {
 
   return (
     <div className="flex flex-col p-3 border-b-2 border-border mb-2 bg-surface">
-      <h2 className="font-display text-brand text-[0.65rem] uppercase mb-3 tracking-wider flex justify-between">
-        <span>ACCESO RÁPIDO</span>
-      </h2>
+      {currentItems.length > 0 && (
+        <div className="flex flex-col mb-4">
+          <h2 className="font-display text-brand text-[0.65rem] uppercase mb-3 tracking-wider flex justify-between">
+            <span>ACCESO RÁPIDO</span>
+          </h2>
+          <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-1">
+            {currentItems.map(([id, qty]) => {
+              const item = ITEMS[id];
+              if (!item) return null;
+              return (
+                <div
+                  key={id}
+                  className="flex items-center justify-between p-2 bg-surface-alt border border-border group relative"
+                >
+                  <div className="flex items-center gap-3">
+                    <ItemSprite
+                      item={item}
+                      size={24}
+                      className="drop-shadow-sm group-hover:scale-110 transition-transform"
+                    />
+                    <div className="flex flex-col gap-0.5 max-w-[80px]">
+                      <span className="font-display text-[0.5rem] tracking-wider truncate text-foreground">
+                        {item.name}
+                      </span>
+                      <span className="font-body text-[0.55rem] font-bold text-muted">
+                        x{qty}
+                      </span>
+                    </div>
+                  </div>
 
-      <div className="flex flex-col gap-1.5 min-h-[120px] max-h-[220px] overflow-y-auto pr-1">
-        {currentItems.length === 0 ? (
-          <div className="text-center font-body text-xs text-muted italic p-4">
-            No hay objetos anclados. Usa la Mochila para anclar objetos aquí.
-          </div>
-        ) : (
-          currentItems.map(([id, qty]) => {
-            const item = ITEMS[id];
-            if (!item) return null;
-            return (
-              <div
-                key={id}
-                className="flex items-center justify-between p-2 bg-surface-alt border border-border group relative"
-              >
-                <div className="flex items-center gap-3">
-                  <ItemSprite
-                    item={item}
-                    size={24}
-                    className="drop-shadow-sm group-hover:scale-110 transition-transform"
-                  />
-                  <div className="flex flex-col gap-0.5 max-w-[80px]">
-                    <span className="font-display text-[0.5rem] tracking-wider truncate text-foreground">
-                      {item.name}
-                    </span>
-                    <span className="font-body text-[0.55rem] font-bold text-muted">
-                      x{qty}
-                    </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => unpinItem(id, e)}
+                      className="p-1 px-1.5 bg-surface border border-transparent text-muted hover:text-danger hover:border-danger transition-colors opacity-0 group-hover:opacity-100"
+                      title="Desanclar"
+                    >
+                      <StarOff size={12} />
+                    </button>
+
+                    {(item.category === "heal" ||
+                      item.category === "held" ||
+                      item.category === "evo" ||
+                      item.category === "ball" ||
+                      item.category === "battle" ||
+                      item.category === "berry") && (
+                      <button
+                        onClick={() => setUseTargetModal(id)}
+                        className="px-2 py-1.5 bg-surface-dark border border-border text-[0.45rem] text-muted font-display uppercase tracking-widest hover:border-brand hover:text-brand transition-colors"
+                      >
+                        {item.category === "held" ? "EQUIPAR" : "USAR"}
+                      </button>
+                    )}
                   </div>
                 </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => unpinItem(id, e)}
-                    className="p-1 px-1.5 bg-surface border border-transparent text-muted hover:text-danger hover:border-danger transition-colors opacity-0 group-hover:opacity-100"
-                    title="Desanclar"
-                  >
-                    <StarOff size={12} />
-                  </button>
-
-                  {(item.category === "heal" ||
-                    item.category === "held" ||
-                    item.category === "evo" ||
-                    item.category === "ball" ||
-                    item.category === "battle" ||
-                    item.category === "berry") && (
-                    <button
-                      onClick={() => setUseTargetModal(id)}
-                      className="px-2 py-1.5 bg-surface-dark border border-border text-[0.45rem] text-muted font-display uppercase tracking-widest hover:border-brand hover:text-brand transition-colors"
-                    >
-                      {item.category === "held" ? "EQUIPAR" : "USAR"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      <div className="mt-4 flex items-center justify-between border-t border-dashed border-border pt-3">
-        <span className="font-display text-[0.55rem] text-muted tracking-widest">
-          AUTO-CURACIÓN
-        </span>
-        <button
-          onClick={() =>
-            setRun((prev) => ({ ...prev, autoItems: !prev.autoItems }))
-          }
-          className={`px-3 py-1 font-display text-[0.55rem] border-2 transition-colors ${run.autoItems ? "bg-success/20 text-success border-success" : "bg-surface-dark text-muted border-border hover:border-muted"}`}
-        >
-          {run.autoItems ? "ON" : "OFF"}
-        </button>
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {useTargetModal !== null && (
         <ConfirmModal
@@ -198,7 +181,7 @@ export function ItemBag() {
                   key={p.uid}
                   onClick={() => handleUseItem(p.uid)}
                   className={clsx(
-                    "flex justify-between items-center p-2 bg-surface border-2 flex-shrink-0 transition-colors",
+                    "flex justify-between items-center p-2 bg-surface border-2 shrink-0 transition-colors",
                     p.currentHP === 0
                       ? "border-danger/30 opacity-70 grayscale-[0.8]"
                       : "border-border hover:border-brand",

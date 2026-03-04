@@ -1,43 +1,38 @@
-# Posibles Mejoras y Futuras Funcionalidades
+# Ideas Futuras y Prioridades de Desarrollo - PokeIdle
 
-Con la asombrosa expansión del sistema de objetos (`items.ts`) y la creación de los diccionarios y filtros de Pokémon (`pokemonDictionary.ts`, `pokemonFilters.ts`), las bases del juego se han vuelto sumamente robustas. Aquí hay una lista de funcionalidades que se podrían implementar en el futuro para aprovechar al máximo esta nueva arquitectura:
+Este documento clasifica las tareas pendientes por su importancia estratégica para el proyecto, priorizando la estabilidad de la interfaz y la experiencia de usuario (UX).
 
-## 1. Sistema de Inventario y Bolsa (Bag)
+## Prioridad Alta: Funcionalidades de Inicio y UX
 
-- **Mejora Interfaz:** Crear una vista de "Bolsa" dividida por categorías (Poké Balls, Medicinas, Bayas, Objetos de Batalla, Objetos Clave).
-- **Gestión de Espacio:** Posibilidad de ordenar, filtrar o asignar objetos favoritos para acceso rápido.
+_Estas tareas son fundamentales para la fluidez del inicio del juego y la experiencia del jugador._
 
-## 2. Uso Activo de Objetos en Combate
+1.  **Configuración de Inicio de Run:**
+    - Modal de selección entre **Modo Idle** y **Modo Manual** al empezar.
+    - Tutorial/Aviso inicial sobre la posibilidad de alternar modos mediante el botón de control en la zona.
 
-- **Modo Manual Ampliado:** En combates manuales o contra Jefes, añadir un botón de "Bolsa" que pause momentáneamente el combate para permitir el uso estratégico de:
-  - **Medicinas:** Pociones, Restaurar Todo, Revivir.
-  - **Poké Balls:** Permitir al jugador elegir qué tipo de Ball lanzar, calculando el ratio de captura basado en la Ball elegida (Ej. Ocaso Ball de noche, Malla Ball contra tipo Agua).
-  - **Objetos de Batalla (Stats):** Uso de Ataque X, Defensa X, etc., que duran hasta el fin del combate.
+## Prioridad Media: Lógica de Juego y Visuales
 
-## 3. Sistema de Megaevolución Dinámica
+_Mejoras en sistemas existentes y feedback visual._
 
-- **Botón de Megaevolución:** Si el jugador posee el "Mega-Brazalete" (objeto clave) y el Pokémon activo lleva equipada su respectiva Mega Piedra (Ej. Venusaurita), habilitar un botón especial que cambie las estadísticas, tipo y sprite del Pokémon durante ese combate.
+2.  **Gacha de Shinies (Corrección de Lógica):** Asegurar que los legendarios obtenidos en este gacha sean siempre Shinies con una probabilidad mucho menor que la de obtener un legendario normal. Permitir obtener versiones shiny de iniciales no poseídos.
+3.  **Gestión de Shinies (Selección):**
+    - Permitir elegir la apariencia (Normal/Shiny) en la selección de iniciales si se ha desbloqueado.
+    - Añadir indicador visual (estrella) en el sprite de selección.
+4.  **Cambios Visuales y Fondos:**
+    - Fondos específicos para cada zona, gimnasios, etc.
+    - Animaciones de ataque y captura.
+    - Animación de entrada de Pokémon inmediata en modo manual (sustituyendo la barra de carga).
+5.  **Adaptabilidad Mobile (Responsive):** Forzar orientación horizontal (Landscape) en móviles y corregir escalado de componentes.
 
-## 4. Efectos Intrínsecos de las Bayas
+## Prioridad Baja: Expansión de Sistemas
 
-- **Consumo Automático:** Integrar un sistema donde los Pokémon que lleven equipada una Baya (Ej. Baya Zidra, Baya Ziuela) la consuman de forma automática durante el combate según el _trigger_ correspondiente (bajar del 50% de HP o recibir un problema de estado).
+_Nuevas mecánicas y funcionalidades a largo plazo._
 
-## 5. Crianza y Objetos de Incienso
-
-- **Guardería Pokémon:** Implementar un sistema de crianza. Aprovechando los inciensos añadidos, se podría requerir que los padres lleven equipado el incienso correspondiente para que el huevo eclosione en formas como Munchlax o Wynaut en lugar de Snorlax o Wobbuffet.
-
-## 6. Lógica Específica para Objetos Sostenidos Complejos
-
-- Integrar la validación y el bucle lógico en el motor (`useEngineTick`) para los objetos competitivos más complejos, como:
-  - **Mineral Evolutivo (Eviolite):** Aumentar defensas solo si el Pokémon base tiene evoluciones pendientes.
-  - **Restos (Leftovers) / Lodo Negro:** Curación / daño progresivo al final del turno.
-  - **Objetos Elección (Choice Band, Specs, Scarf):** Bloquear el uso de movimientos a uno solo, a cambio de un enorme _boost_ de estadísticas.
-  - **Banda Focus (Focus Sash):** Evitar el KO garantizando 1 HP ante ataques letales.
-
-## 7. Criterios de Aparición en Tienda y Botín
-
-- **Misiones o Progresión de Gimnasio:** Hacer que los objetos dependan no solo de tener un Pokémon del tipo adecuado (`buyable` dinámico), sino de haber derrotado a un líder de gimnasio específico (Ej: Las Ultra Balls solo aparecen en la tienda después del 4.º gimnasio).
-
-## 8. Sistema de Formas Alternas
-
-- Incorporar soportes para cambios de forma en batalla o permanentes (Palkia con Lustresfera, Rotom con electrodomésticos, Ogerpon con Máscaras). El diccionario actual ya soporta diferenciar estas especificaciones.
+6.  **Autenticación Local:** Sistema de cuentas (usuario/contraseña) sin dependencia de Gmail.
+7.  **Nuevas Mecánicas de Combate:**
+    - Introducir MTs y MOs.
+    - Megaevolución Dinámica (Mega-Brazalete + Mega Piedra).
+    - Consumo automático de Bayas equipadas.
+8.  **Criterios de Progresión:** Desbloqueo de objetos en tienda (ej. Ultra Balls) condicionado a medallas u objetivos.
+9.  **Formas Alternas:** Soporte para cambios de forma por objetos (ej. Lustresfera).
+10. **Entrenamiento Infinito (En Lluvia de Ideas):** Rediseño completo para mejorar balance y gratificación.

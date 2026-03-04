@@ -138,6 +138,7 @@ const defaultMeta: MetaState = {
   capturedUniqueIds: [],
   totalItemsUsed: {},
   gachaPity: {},
+  hideTutorial: false,
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -179,6 +180,7 @@ function runMigrationsMeta(loaded: any) {
   loaded.lastShiny = loaded.lastShiny ?? null;
   loaded.capturedUniqueIds = loaded.capturedUniqueIds ?? [];
   loaded.totalItemsUsed = loaded.totalItemsUsed ?? {};
+  loaded.hideTutorial = loaded.hideTutorial ?? false;
   return loaded;
 }
 
