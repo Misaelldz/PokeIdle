@@ -30,6 +30,10 @@ export interface ActiveMove {
   maxPP: number;
   priority: number;
   enabled: boolean;
+  statusEffect?: {
+    condition: StatusCondition;
+    chance: number; // 0 to 100
+  };
 }
 
 export interface ActivePokemon {
@@ -132,7 +136,7 @@ export interface RunState {
   hasExpShare: boolean;
   hasMegaBracelet: boolean;
 
-  speedMultiplier: 1 | 2 | 4 | "SKIP";
+  speedMultiplier: 0 | 1 | 2 | 4 | "SKIP";
   autoCapture: boolean;
   autoItems: boolean;
   autoHealThreshold: number; // e.g. 0.3 defaults to 30%

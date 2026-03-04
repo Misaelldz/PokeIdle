@@ -157,24 +157,14 @@ export function useEngineTick() {
             const bossLevel = teamMaxLevel + 2;
             const encounter = getWildEncounter(currentZone);
 
-            // Perfect IVs for Boss
-            const perfectIVs: PokemonStats = {
-              hp: 31,
-              attack: 31,
-              defense: 31,
-              spAtk: 31,
-              spDef: 31,
-              speed: 31,
-            };
-            // Favorable nature (Firme/Adamant for physical, Modesta/Modest for special)
-            // Just picking one for now or we could randomize among "good" ones
+            // Random IVs for Boss, plus a favorable nature
             const forcedNature = "adamant";
 
             enemy = await getPokemonData(
               encounter.pokemonId,
               bossLevel,
               false,
-              perfectIVs,
+              undefined, // Generate random IVs dynamically in getPokemonData
               forcedNature,
             );
             enemy.name = `BOSS ${enemy.name}`;
@@ -230,6 +220,7 @@ export function useEngineTick() {
     // --- AUTO-ITEMS CHECK ---
     if (
       run.autoItems &&
+      !run.isManualBattle &&
       run.currentBattle &&
       run.currentBattle.playerPokemon.currentHP /
         run.currentBattle.playerPokemon.maxHP <
@@ -387,16 +378,42 @@ export function useEngineTick() {
 
       // If we switched this turn, we skip the player attack phase
       if (!usedManualTurn || pMove) {
-        // Player attacks
-        pushLog(
-          `${bState.playerPokemon.name} usa ${pMove!.moveName}.`,
-          "attack",
-        );
-        let {
-          damage: pDmg,
-          isCrit: pCrit,
-          effectiveness: pEff,
-        } = calculateDamage(bState.playerPokemon, bState.enemyPokemon, pMove!);
+        // --- PLAYER PRE-ATTACK STATUS CHECK ---
+        let pCanAttack = true;
+        if (bState.playerPokemon.status === "SLP") {
+          if (Math.random() < 0.3) {
+            bState.playerPokemon.status = null;
+            pushLog(`¡${bState.playerPokemon.name} se despertó!`, "normal");
+          } else {
+            pushLog(`¡${bState.playerPokemon.name} está profundamente dormido!`, "normal");
+            pCanAttack = false;
+          }
+        } else if (bState.playerPokemon.status === "FRZ") {
+          if (Math.random() < 0.2) {
+            bState.playerPokemon.status = null;
+            pushLog(`¡${bState.playerPokemon.name} se descongeló!`, "normal");
+          } else {
+            pushLog(`¡${bState.playerPokemon.name} está congelado!`, "normal");
+            pCanAttack = false;
+          }
+        } else if (bState.playerPokemon.status === "PAR") {
+          if (Math.random() < 0.25) {
+            pushLog(`¡${bState.playerPokemon.name} está paralizado y no puede moverse!`, "danger");
+            pCanAttack = false;
+          }
+        }
+
+        if (pCanAttack) {
+          // Player attacks
+          pushLog(
+            `${bState.playerPokemon.name} usa ${pMove!.moveName}.`,
+            "attack",
+          );
+          let {
+            damage: pDmg,
+            isCrit: pCrit,
+            effectiveness: pEff,
+          } = calculateDamage(bState.playerPokemon, bState.enemyPokemon, pMove!);
 
         const { nextHP, focusBandTriggered: pFocusTriggered } = applyDamage(
           bState.enemyPokemon,
@@ -415,6 +432,15 @@ export function useEngineTick() {
             `¡${bState.enemyPokemon.name} aguantó el golpe con su Banda Focus!`,
             "normal",
           );
+        }
+
+        // Apply Status Effect from Move
+        if (pMove!.statusEffect && !bState.enemyPokemon.status && nextEnemyHP > 0) {
+          if (Math.random() * 100 < pMove!.statusEffect.chance) {
+            bState.enemyPokemon.status = pMove!.statusEffect.condition;
+            const statusNames = { BRN: "quemado", PAR: "paralizado", PSN: "envenenado", TOX: "gravemente envenenado", SLP: "dormido", FRZ: "congelado" };
+            pushLog(`¡${bState.enemyPokemon.name} ha sido ${statusNames[pMove!.statusEffect.condition]} por el ataque!`, "normal");
+          }
         }
 
         const pMoveIdx = bState.playerPokemon.moves.findIndex(
@@ -436,14 +462,14 @@ export function useEngineTick() {
             bState.bossCurrentBar = (bState.bossCurrentBar || 1) + 1;
             bState.enemyPokemon.currentHP = bState.enemyPokemon.maxHP;
 
-            // Apply +2 Boosts
-            bState.enemyPokemon.statModifiers.atk = Math.min(
+            // Apply +1 Boosts (Defensive)
+            bState.enemyPokemon.statModifiers.def = Math.min(
               6,
-              bState.enemyPokemon.statModifiers.atk + 2,
+              bState.enemyPokemon.statModifiers.def + 1,
             );
-            bState.enemyPokemon.statModifiers.spa = Math.min(
+            bState.enemyPokemon.statModifiers.spd = Math.min(
               6,
-              bState.enemyPokemon.statModifiers.spa + 2,
+              bState.enemyPokemon.statModifiers.spd + 1,
             );
 
             pushLog(
@@ -451,7 +477,7 @@ export function useEngineTick() {
               "danger",
             );
             pushLog(
-              `¡EL BOSS OBTIENE +2 ATAQUE Y +2 ATAQUE ESPECIAL!`,
+              `¡EL BOSS OBTIENE +1 DEFENSA Y +1 DEFENSA ESPECIAL!`,
               "danger",
             );
 
@@ -571,7 +597,7 @@ export function useEngineTick() {
             }
           }
 
-          nextState.pendingLootSelection = generateLootOptions();
+          nextState.pendingLootSelection = generateLootOptions([], { team: nextState.team, pc: nextState.pc });
 
           nextState.battleLog = logs.slice(-40);
           return nextState;
@@ -581,22 +607,53 @@ export function useEngineTick() {
           ...bState.enemyPokemon,
           currentHP: nextEnemyHP,
         };
-      }
+      } // End of Player Turn
 
-      // Enemy attacks
-      pushLog(
-        `${bState.enemyPokemon.name} enemigo usa ${eMove.moveName}.`,
-        "danger",
-      );
-      let {
-        damage: eDmg,
-        isCrit: eCrit,
-        effectiveness: eEff,
-      } = calculateDamage(bState.enemyPokemon, bState.playerPokemon, eMove);
+      } // End of if (!usedManualTurn || pMove)
 
-      const { nextHP: nextPlayerHP_val, focusBandTriggered: eFocusTriggered } =
-        applyDamage(bState.playerPokemon, eDmg);
-      let nextPlayerHP = nextPlayerHP_val;
+      let nextPlayerHP = bState.playerPokemon.currentHP;
+
+      // --- ENEMY PRE-ATTACK STATUS CHECK ---
+      if (bState.enemyPokemon.currentHP > 0) {
+        let eCanAttack = true;
+        if (bState.enemyPokemon.status === "SLP") {
+          if (Math.random() < 0.3) {
+            bState.enemyPokemon.status = null;
+            pushLog(`¡${bState.enemyPokemon.name} enemigo se despertó!`, "danger");
+          } else {
+            pushLog(`¡${bState.enemyPokemon.name} enemigo está profundamente dormido!`, "normal");
+            eCanAttack = false;
+          }
+        } else if (bState.enemyPokemon.status === "FRZ") {
+          if (Math.random() < 0.2) {
+            bState.enemyPokemon.status = null;
+            pushLog(`¡${bState.enemyPokemon.name} enemigo se descongeló!`, "danger");
+          } else {
+            pushLog(`¡${bState.enemyPokemon.name} enemigo está congelado!`, "normal");
+            eCanAttack = false;
+          }
+        } else if (bState.enemyPokemon.status === "PAR") {
+          if (Math.random() < 0.25) {
+            pushLog(`¡${bState.enemyPokemon.name} enemigo está paralizado y no puede moverse!`, "normal");
+            eCanAttack = false;
+          }
+        }
+
+        if (eCanAttack) {
+          // Enemy attacks
+          pushLog(
+            `${bState.enemyPokemon.name} enemigo usa ${eMove.moveName}.`,
+            "danger",
+          );
+          let {
+            damage: eDmg,
+            isCrit: eCrit,
+            effectiveness: eEff,
+          } = calculateDamage(bState.enemyPokemon, bState.playerPokemon, eMove);
+
+          const { nextHP: nextPlayerHP_val, focusBandTriggered: eFocusTriggered } =
+            applyDamage(bState.playerPokemon, eDmg);
+          nextPlayerHP = nextPlayerHP_val;
 
       if (eCrit) pushLog(`¡GOLPE CRÍTICO!`, "crit");
       if (eEff >= 2) pushLog(`¡Es súper efectivo!`, "danger");
@@ -607,6 +664,41 @@ export function useEngineTick() {
           `¡${bState.playerPokemon.name} aguantó el golpe con su Banda Focus!`,
           "normal",
         );
+      }
+
+      // Apply Status Effect from Enemy Move
+      if (eMove.statusEffect && !bState.playerPokemon.status && nextPlayerHP > 0) {
+        if (Math.random() * 100 < eMove.statusEffect.chance) {
+          bState.playerPokemon.status = eMove.statusEffect.condition;
+          const statusNames = { BRN: "quemado", PAR: "paralizado", PSN: "envenenado", TOX: "gravemente envenenado", SLP: "dormido", FRZ: "congelado" };
+          pushLog(`¡${bState.playerPokemon.name} ha sido ${statusNames[eMove.statusEffect.condition]} por el ataque!`, "danger");
+        }
+      }
+      } // End of eCanAttack
+      } // End of if (bState.enemyPokemon.currentHP > 0)
+
+      // --- END OF TURN EFFECTS (Burn/Poison) ---
+      if (nextPlayerHP > 0 && bState.playerPokemon.status === "BRN") {
+        nextPlayerHP = Math.max(0, nextPlayerHP - Math.max(1, Math.floor(bState.playerPokemon.maxHP / 16)));
+        pushLog(`¡A ${bState.playerPokemon.name} le duele la quemadura!`, "danger");
+      } else if (nextPlayerHP > 0 && (bState.playerPokemon.status === "PSN" || bState.playerPokemon.status === "TOX")) {
+        nextPlayerHP = Math.max(0, nextPlayerHP - Math.max(1, Math.floor(bState.playerPokemon.maxHP / 8)));
+        pushLog(`¡El veneno resta salud a ${bState.playerPokemon.name}!`, "danger");
+      }
+
+      let eNextHP = bState.enemyPokemon.currentHP;
+      if (eNextHP > 0 && bState.enemyPokemon.status === "BRN") {
+        eNextHP = Math.max(0, eNextHP - Math.max(1, Math.floor(bState.enemyPokemon.maxHP / 16)));
+        pushLog(`¡A ${bState.enemyPokemon.name} enemigo le duele la quemadura!`, "normal");
+      } else if (eNextHP > 0 && (bState.enemyPokemon.status === "PSN" || bState.enemyPokemon.status === "TOX")) {
+        eNextHP = Math.max(0, eNextHP - Math.max(1, Math.floor(bState.enemyPokemon.maxHP / 8)));
+        pushLog(`¡El veneno resta salud a ${bState.enemyPokemon.name} enemigo!`, "normal");
+      }
+      bState.enemyPokemon.currentHP = eNextHP;
+
+      if (eNextHP === 0 && nextPlayerHP > 0) {
+        pushLog(`¡El problema de estado debilitó a ${bState.enemyPokemon.name}!`, "normal");
+        // Simplified skip to next turn. Next tick will evaluate death properly.
       }
 
       if (nextPlayerHP === 0) {
@@ -694,7 +786,7 @@ export function useEngineTick() {
             nextState.team = res.newTeam;
             nextState.pc = res.newPC;
             nextState.currentBattle = null;
-            nextState.pendingLootSelection = generateLootOptions();
+            nextState.pendingLootSelection = generateLootOptions([], { team: nextState.team, pc: nextState.pc });
 
             // Unlock or Update Starter Genetics
             setMeta((m) => {

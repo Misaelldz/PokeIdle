@@ -49,6 +49,32 @@ export function ItemBag() {
           },
         }));
       }
+    } else {
+      const { success, newPokemon, newInventory, resultLog } =
+        await useItemOnPokemon(pokemon, useTargetModal, run.items);
+      if (success) {
+        setRun((prev) => ({
+          ...prev,
+          items: newInventory,
+          itemUsage: {
+            ...prev.itemUsage,
+            [useTargetModal]: (prev.itemUsage[useTargetModal] || 0) + 1,
+          },
+          team: prev.team.map((p) => (p.uid === pokemon!.uid ? newPokemon : p)),
+          battleLog: [
+            ...prev.battleLog,
+            { id: Date.now().toString(), text: resultLog, type: "normal" as const },
+          ].slice(-40),
+        }));
+        setMeta((prev) => ({
+          ...prev,
+          totalItemsUsed: {
+            ...prev.totalItemsUsed,
+            [itemDef.category]:
+              (prev.totalItemsUsed[itemDef.category] || 0) + 1,
+          },
+        }));
+      }
     }
 
     setUseTargetModal(null);

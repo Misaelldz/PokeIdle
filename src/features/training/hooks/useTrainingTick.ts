@@ -272,7 +272,7 @@ export function useTrainingTick() {
           currentBattle: null, // Reset for next battle in next tick
           totalBattlesWon: state.totalBattlesWon + 1,
           battleLog: logs.slice(-40),
-          pendingLootSelection: generateLootOptions(["ball"]),
+          pendingLootSelection: generateLootOptions(["ball"], { team: [leveledPokemon], pc: [] }),
         };
       }
 

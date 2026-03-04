@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useGame } from "../../../context/GameContext";
 import { REGIONS } from "../../../lib/regions";
 import { LootTablePopover } from "./LootTablePopover";
 import { PixelSprite } from "../../../components/ui/PixelSprite";
+import { MapModal } from "./MapModal";
 
 export function ZoneView() {
   const { run, setRun } = useGame();
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   if (!run.isActive || !run.currentRegion) return null;
 
@@ -30,6 +32,39 @@ export function ZoneView() {
         <span className="font-display text-[0.6rem] text-muted tracking-widest whitespace-nowrap shrink-0">
           ZONA {run.currentZoneIndex + 1}
         </span>
+      </div>
+
+      {/* Roadmap visual */}
+      <div className="bg-surface p-2 py-3 border-b border-border flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <button 
+          onClick={() => setIsMapOpen(true)}
+          className="shrink-0 hover:scale-110 hover:-translate-y-1 transition-transform group relative focus:outline-none"
+        >
+          <img 
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/town-map.png"
+            alt="Map Sprite"
+            className="w-8 h-8 rendering-pixelated drop-shadow-md cursor-pointer filter group-hover:drop-shadow-[0_0_8px_rgba(255,206,49,0.8)]"
+          />
+        </button>
+        <div className="flex-1 flex items-center justify-between gap-1">
+          {region.zones.map((z, idx) => {
+            const isCurrent = idx === run.currentZoneIndex;
+            const isPast = idx < run.currentZoneIndex;
+            return (
+              <React.Fragment key={z.id}>
+                <div 
+                  className={`w-5 h-5 md:w-6 md:h-6 shrink-0 border-2 flex items-center justify-center font-display text-[0.45rem] ${isCurrent ? "bg-brand border-brand-deep text-white shadow-[0_0_5px_rgba(255,0,0,0.5)]" : isPast ? "bg-accent border-accent text-black" : "bg-surface-dark border-border text-muted"}`}
+                  title={`${z.name} - ${z.trainerCount} batallas`}
+                >
+                  {idx + 1}
+                </div>
+                {idx < region.zones.length - 1 && (
+                  <div className={`h-1 flex-1 min-w-[8px] md:min-w-[12px] ${isPast ? "bg-accent" : "bg-border"}`} />
+                )}
+              </React.Fragment>
+            )
+          })}
+        </div>
       </div>
 
       <div className="p-3 bg-surface flex-1 flex flex-col overflow-y-auto">
@@ -128,6 +163,8 @@ export function ZoneView() {
           {run.items["great-ball"] || 0} Super Balls
         </div>
       </div>
+      
+      {isMapOpen && <MapModal onClose={() => setIsMapOpen(false)} />}
     </div>
   );
 }

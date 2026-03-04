@@ -1,22 +1,35 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function useGameLoop(
   isActive: boolean,
-  speedMultiplier: 1 | 2 | 4 | "SKIP",
+  speedMultiplier: 0 | 1 | 2 | 4 | "SKIP",
   tickCallback: () => void
 ) {
   const savedCallback = useRef(tickCallback);
+  const [isVisible, setIsVisible] = useState(
+    typeof document !== "undefined" ? !document.hidden : true
+  );
 
   useEffect(() => {
     savedCallback.current = tickCallback;
   }, [tickCallback]);
 
+  // Handle visibility changes to prevent Alt+Tab crashes
   useEffect(() => {
-    if (!isActive) return;
+    const handleVisibilityChange = () => {
+      setIsVisible(!document.hidden);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isActive || !isVisible || speedMultiplier === 0) return; // Pause loop when tab is hidden or paused
 
     if (speedMultiplier === "SKIP") {
-      // Very fast simulation handled by synchronous loops inside the game engine,
-      // but to avoid freezing the UI, we can use a very short interval
       const id = setInterval(() => {
         savedCallback.current();
       }, 50); // Fast forward tick
@@ -29,5 +42,5 @@ export function useGameLoop(
     }, intervalMs);
 
     return () => clearInterval(id);
-  }, [isActive, speedMultiplier]);
+  }, [isActive, speedMultiplier, isVisible]);
 }

@@ -14,6 +14,18 @@ import {
 
 const API_BASE = "https://pokeapi.co/api/v2";
 
+function mapAilment(ailmentName: string): import("../types/game.types").StatusCondition | null {
+  switch (ailmentName) {
+    case "paralysis": return "PAR";
+    case "burn": return "BRN";
+    case "poison": return "PSN";
+    case "toxic": return "TOX";
+    case "sleep": return "SLP";
+    case "freeze": return "FRZ";
+    default: return null;
+  }
+}
+
 export async function fetchJson(url: string, signal?: AbortSignal) {
   const cached = getCached(url);
   if (cached) return cached;
@@ -97,6 +109,18 @@ export async function getPokemonData(
       if (md.power && md.power > 0) {
         const spanText =
           md.names.find((n: any) => n.language.name === "es")?.name || md.name;
+          
+        let statusEffect = undefined;
+        if (md.meta && md.meta.ailment && md.meta.ailment.name !== "none") {
+           const condition = mapAilment(md.meta.ailment.name);
+           if (condition) {
+             statusEffect = {
+               condition,
+               chance: md.meta.ailment_chance || 100
+             };
+           }
+        }
+
         activeMoves.push({
           moveId: md.id,
           moveName: spanText,
@@ -108,6 +132,7 @@ export async function getPokemonData(
           maxPP: md.pp || 10,
           priority: md.priority || 0,
           enabled: true,
+          statusEffect,
         });
       }
     } catch (e) {
@@ -236,6 +261,17 @@ export async function learnMovesOnLevelUp(
 
     const moveName =
       md.names.find((n: any) => n.language.name === "es")?.name ?? md.name;
+      
+    let statusEffect = undefined;
+    if (md.meta && md.meta.ailment && md.meta.ailment.name !== "none") {
+       const condition = mapAilment(md.meta.ailment.name);
+       if (condition) {
+         statusEffect = {
+           condition,
+           chance: md.meta.ailment_chance || 100
+         };
+       }
+    }
 
     const newMove: import("../types/game.types").ActiveMove = {
       moveId: md.id,
@@ -248,6 +284,7 @@ export async function learnMovesOnLevelUp(
       maxPP: md.pp || 10,
       priority: md.priority || 0,
       enabled: true,
+      statusEffect,
     };
 
     // Replace the first (oldest) move if already have 4

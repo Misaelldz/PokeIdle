@@ -94,6 +94,12 @@ export function LootSelectionModal() {
         </p>
       )}
 
+      {isManual && (
+        <p className="font-body text-[0.55rem] text-brand mb-4">
+          Modo Manual: Elige tu recompensa.
+        </p>
+      )}
+
       <div className="flex flex-row gap-3 w-full max-w-lg justify-center items-stretch">
         {options.map((itemId, idx) => {
           const item = ITEMS[itemId];

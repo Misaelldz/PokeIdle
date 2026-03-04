@@ -39,7 +39,7 @@ export function calculateDamage(
   let atk = 1;
   let def = 1;
 
-  // Held Item Multipliers
+  // Held Item Multipliers (Attacker)
   let atkMult = 1;
   let spaMult = 1;
   if (attacker.heldItem) {
@@ -50,19 +50,35 @@ export function calculateDamage(
     }
   }
 
+  // Held Item Multipliers (Defender)
+  let defMult = 1;
+  let spdMult = 1;
+  if (defender.heldItem) {
+    const item = ITEMS[defender.heldItem];
+    if (item?.effect.type === "stat_boost") {
+      if (item.effect.stat === "defense") defMult = item.effect.amount;
+      if (item.effect.stat === "spDef") spdMult = item.effect.amount;
+    }
+  }
+
   if (move.category === "physical") {
     atk =
       attacker.stats.attack *
       getStatMultiplier(attacker.statModifiers.atk) *
       atkMult;
     def =
-      defender.stats.defense * getStatMultiplier(defender.statModifiers.def);
+      defender.stats.defense * 
+      getStatMultiplier(defender.statModifiers.def) *
+      defMult;
   } else if (move.category === "special") {
     atk =
       attacker.stats.spAtk *
       getStatMultiplier(attacker.statModifiers.spa) *
       spaMult;
-    def = defender.stats.spDef * getStatMultiplier(defender.statModifiers.spd);
+    def = 
+      defender.stats.spDef * 
+      getStatMultiplier(defender.statModifiers.spd) *
+      spdMult;
   }
 
   // Level factor

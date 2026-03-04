@@ -6,6 +6,7 @@ import { HPBar } from "../../../components/ui/HPBar";
 import { XPBar } from "../../../components/ui/XPBar";
 import { TypeBadge } from "../../../components/ui/TypeBadge";
 import { MoveManager } from "./MoveManager";
+import { ConfirmModal } from "../../../components/ui/ConfirmModal";
 import { clsx } from "clsx";
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 export function PokemonCard({ pokemon, isActive, onMoveToPC }: Props) {
   const { run, setRun } = useGame();
   const [expanded, setExpanded] = useState(false);
+  const [showReleaseConfirm, setShowReleaseConfirm] = useState(false);
 
   const handleSwitch = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -35,46 +37,29 @@ export function PokemonCard({ pokemon, isActive, onMoveToPC }: Props) {
     }
   };
 
+  const handleRelease = () => {
+    setRun((prev) => {
+      // Don't allow releasing the last pokemon if in battle, etc.
+      // But let's just remove it from the team for now
+      return {
+        ...prev,
+        team: prev.team.filter(p => p.uid !== pokemon.uid)
+      };
+    });
+    setShowReleaseConfirm(false);
+  };
+
   return (
     <div
       className={clsx(
         "border-2 transition-colors",
         isActive ? "bg-surface-alt border-brand" : "bg-surface border-border",
-        pokemon.currentHP === 0 && "opacity-60 grayscale-[0.5]",
-        run.isManualBattle &&
-          run.currentBattle?.phase === "active" &&
-          !isActive &&
-          pokemon.currentHP > 0 &&
-          "cursor-pointer hover:border-brand-dark",
+        pokemon.currentHP === 0 && "opacity-60 grayscale-[0.5]"
       )}
-      onClick={() => {
-        // In manual battle, clicking the card directly can also act as a switch
-        if (
-          run.isManualBattle &&
-          run.currentBattle?.phase === "active" &&
-          !isActive &&
-          pokemon.currentHP > 0
-        ) {
-          setRun((prev) => ({
-            ...prev,
-            currentBattle: {
-              ...prev.currentBattle!,
-              manualActionQueue: { type: "switch", id: pokemon.uid },
-            },
-          }));
-        }
-      }}
     >
       <div
         className="p-2 flex items-center gap-3 cursor-pointer hover:bg-surface-light"
         onClick={(e) => {
-          // Prevent expanding if we are in manual battle and clicked to switch
-          if (
-            run.isManualBattle &&
-            run.currentBattle?.phase === "active" &&
-            !isActive
-          )
-            return;
           setExpanded(!expanded);
         }}
         role="button"
@@ -195,8 +180,30 @@ export function PokemonCard({ pokemon, isActive, onMoveToPC }: Props) {
               Mover al PC
             </button>
           )}
+
+          {!isActive && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReleaseConfirm(true);
+              }}
+              className="mt-1 w-full py-1.5 bg-danger/20 border border-danger text-[0.6rem] text-danger hover:bg-danger hover:text-white transition-colors font-display tracking-wider uppercase"
+            >
+              Liberar
+            </button>
+          )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showReleaseConfirm}
+        onClose={() => setShowReleaseConfirm(false)}
+        title={`¿Liberar a ${pokemon.name}?`}
+        message={`Una vez liberado, ${pokemon.name} se irá para siempre. Esta acción no se puede deshacer.`}
+        confirmText="Liberar"
+        cancelText="Cancelar"
+        onConfirm={handleRelease}
+      />
     </div>
   );
 }
