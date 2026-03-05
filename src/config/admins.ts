@@ -3,7 +3,10 @@
  */
 export const AUTHORIZED_ADMINS = [
   "dzyhoveyker@gmail.com",
-  "alais-rojas@outlook.es" // Add your email here
+  "danirojascrronaldo3@gmail.com",
+  "1777d137-5070-4e39-9a76-40b62b91cd06",
+  "e5f2feca-79b9-4a09-9502-708055795dc2"
+   // Add your email here
   // You can also add Supabase User IDs
 ];
 

@@ -3,7 +3,7 @@ import { AuthPage } from './pages/AuthPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, isGuest, loading } = useAuth();
   
   if (loading) {
     return (
@@ -16,7 +16,7 @@ function AppContent() {
     );
   }
 
-  if (!user) {
+  if (!user && !isGuest) {
     return <AuthPage />;
   }
 

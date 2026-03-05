@@ -52,7 +52,7 @@ export function DebuggerPanel() {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-[9999] w-[350px] max-h-[500px] flex flex-col bg-surface-dark border-4 border-brand pixel-shadow overflow-hidden font-display text-[0.6rem]">
+    <div className="fixed bottom-4 left-4 z-50 w-[350px] max-h-[500px] flex flex-col bg-surface-dark border-4 border-brand pixel-shadow overflow-hidden font-display text-[0.6rem]">
       {/* Header */}
       <div className="bg-brand p-2 flex justify-between items-center text-white">
         <span className="tracking-widest">DEBUGGER ENGINE v1.0</span>

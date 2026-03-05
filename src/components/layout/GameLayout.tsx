@@ -86,7 +86,16 @@ export function GameLayout() {
     }
   };
 
-  // Defeat Screen
+  const globalElements = (
+    <>
+      {isBagOpen && <BagModal onClose={() => setIsBagOpen(false)} />}
+      <ZoneTransitionModal />
+      {showTutorial && <GameTutorialModal onClose={handleCloseTutorial} />}
+      {isAdmin && <DebuggerPanel />}
+    </>
+  );
+
+  // 1. Defeat Screen
   if (
     run.isActive &&
     run.team.length > 0 &&
@@ -128,89 +137,6 @@ export function GameLayout() {
             </div>
           </div>
 
-          {/* Inheritance Progression */}
-          {Object.values(run.inheritanceProgress || {}).length > 0 && (
-            <div className="mt-6 border-t border-border/30 pt-4 max-h-[150px] overflow-y-auto custom-scrollbar">
-              <h3 className="font-display text-[0.6rem] text-accent mb-3 tracking-[0.2em] uppercase">
-                PROGRESO HEREDADO
-              </h3>
-              <div className="flex flex-col gap-3">
-                {Object.values(run.inheritanceProgress).map((progress) => (
-                  <div key={progress.pokemonId} className="flex flex-col gap-1">
-                    <div className="flex justify-between items-center bg-surface px-2 py-1 border-l-2 border-accent">
-                      <span className="font-display text-[0.55rem] text-white">
-                        {progress.pokemonName}
-                      </span>
-                    </div>
-                    {Object.entries(progress.ivs).map(
-                      ([stat, [oldV, newV]]) => (
-                        <div
-                          key={stat}
-                          className="flex justify-between font-body text-[0.5rem] px-2"
-                        >
-                          <span className="text-muted uppercase">
-                            {stat === "attack"
-                              ? "ATK"
-                              : stat === "defense"
-                                ? "DEF"
-                                : stat === "spAtk"
-                                  ? "S.ATK"
-                                  : stat === "spDef"
-                                    ? "S.DEF"
-                                    : stat === "speed"
-                                      ? "VEL"
-                                      : stat.toUpperCase()}{" "}
-                            IV:
-                          </span>
-                          <span className="text-white">
-                            {oldV} <span className="text-accent mx-1">→</span>{" "}
-                            {newV}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                    {Object.entries(progress.evs).map(
-                      ([stat, [oldV, newV]]) => (
-                        <div
-                          key={stat}
-                          className="flex justify-between font-body text-[0.5rem] px-2"
-                        >
-                          <span className="text-muted uppercase">
-                            {stat === "attack"
-                              ? "ATK"
-                              : stat === "defense"
-                                ? "DEF"
-                                : stat === "spAtk"
-                                  ? "S.ATK"
-                                  : stat === "spDef"
-                                    ? "S.DEF"
-                                    : stat === "speed"
-                                      ? "VEL"
-                                      : stat.toUpperCase()}{" "}
-                            EV:
-                          </span>
-                          <span className="text-white">
-                            {oldV} <span className="text-accent mx-1">→</span>{" "}
-                            {newV}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                    {progress.newNatures.length > 0 && (
-                      <div className="flex justify-between font-body text-[0.5rem] px-2">
-                        <span className="text-muted font-bold">
-                          NUEVAS NATURALEZAS:
-                        </span>
-                        <span className="text-white text-right">
-                          {progress.newNatures.length} UNLOCKED
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
           <button
             onClick={() => {
               resetRun();
@@ -221,11 +147,12 @@ export function GameLayout() {
             VOLVER AL MENÚ
           </button>
         </div>
+        {globalElements}
       </div>
     );
   }
 
-  // Champion Screen
+  // 2. Champion Screen
   if (run.isActive && run.eliteFourDefeated) {
     return (
       <div className="fixed inset-0 z-50 bg-[#1A1A00]/95 flex flex-col items-center justify-center crt-screen p-4">
@@ -238,96 +165,17 @@ export function GameLayout() {
           </p>
           <div className="grid grid-cols-2 gap-y-4 gap-x-2 mt-4 font-display text-[0.6rem] text-muted tracking-widest leading-none">
             <span>STARTER:</span>
-            <span className="text-foreground text-right">
-              {run.starterName}
-            </span>
+            <span className="text-foreground text-right">{run.starterName}</span>
             <span>TIEMPO:</span>
             <span className="text-foreground text-right">
               {Math.floor((Date.now() - run.startedAt) / 60000)} MIN
             </span>
             <span>CAPTURAS:</span>
-            <span className="text-foreground text-right">
-              {run.totalCaptured}
-            </span>
+            <span className="text-foreground text-right">{run.totalCaptured}</span>
             <span>VICTORIAS:</span>
-            <span className="text-foreground text-right">
-              {run.totalBattlesWon}
-            </span>
+            <span className="text-foreground text-right">{run.totalBattlesWon}</span>
           </div>
 
-          {/* Inheritance Progression */}
-          {Object.values(run.inheritanceProgress || {}).length > 0 && (
-            <div className="mt-6 border-t border-accent/20 pt-4 max-h-[180px] overflow-y-auto custom-scrollbar">
-              <h3 className="font-display text-[0.6rem] text-accent mb-3 tracking-[0.2em] uppercase">
-                PROGRESO HEREDADO
-              </h3>
-              <div className="flex flex-col gap-3">
-                {Object.values(run.inheritanceProgress).map((progress) => (
-                  <div key={progress.pokemonId} className="flex flex-col gap-1">
-                    <div className="flex justify-between items-center bg-surface px-2 py-1 border-l-2 border-accent">
-                      <span className="font-display text-[0.55rem] text-white">
-                        {progress.pokemonName}
-                      </span>
-                    </div>
-                    {Object.entries(progress.ivs).map(
-                      ([stat, [oldV, newV]]) => (
-                        <div
-                          key={stat}
-                          className="flex justify-between font-body text-[0.5rem] px-2"
-                        >
-                          <span className="text-muted uppercase">
-                            {stat === "attack"
-                              ? "ATK"
-                              : stat === "defense"
-                                ? "DEF"
-                                : stat === "spAtk"
-                                  ? "S.ATK"
-                                  : stat === "spDef"
-                                    ? "S.DEF"
-                                    : stat === "speed"
-                                      ? "VEL"
-                                      : stat.toUpperCase()}{" "}
-                            IV:
-                          </span>
-                          <span className="text-white">
-                            {oldV} <span className="text-accent mx-1">→</span>{" "}
-                            {newV}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                    {Object.entries(progress.evs).map(
-                      ([stat, [oldV, newV]]) => (
-                        <div
-                          key={stat}
-                          className="flex justify-between font-body text-[0.5rem] px-2"
-                        >
-                          <span className="text-muted uppercase">
-                            {stat === "attack"
-                              ? "ATK"
-                              : stat === "defense"
-                                ? "DEF"
-                                : stat === "spAtk"
-                                  ? "S.ATK"
-                                  : stat === "spDef"
-                                    ? "S.DEF"
-                                    : stat === "speed"
-                                      ? "VEL"
-                                      : stat.toUpperCase()}{" "}
-                            EV:
-                          </span>
-                          <span className="text-white">
-                            {oldV} <span className="text-accent mx-1">→</span>{" "}
-                            {newV}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
           <button
             onClick={() => {
               resetRun();
@@ -338,169 +186,147 @@ export function GameLayout() {
             VOLVER AL MENÚ
           </button>
         </div>
+        {globalElements}
       </div>
     );
   }
 
-  // Routing Logic
-  if (currentScreen === "main") {
-    return (
-      <MainMenu
-        onStartNew={() => setCurrentScreen("starter")}
-        onContinue={() => setCurrentScreen("game")}
-        onStartTraining={() => setCurrentScreen("training-select")}
-        onContinueTraining={() => setCurrentScreen("training")}
-        onOpenGacha={() => setCurrentScreen("gacha")}
-        onOpenStats={() => setCurrentScreen("stats")}
-      />
-    );
-  }
+  // 3. Routing Logic
+  let screenContent: React.ReactNode;
 
-  if (currentScreen === "stats") {
-    return <GlobalStatsView onBack={() => setCurrentScreen("main")} />;
-  }
+  switch (currentScreen) {
+    case "main":
+      screenContent = (
+        <MainMenu
+          onStartNew={() => setCurrentScreen("starter")}
+          onContinue={() => setCurrentScreen("game")}
+          onStartTraining={() => setCurrentScreen("training-select")}
+          onContinueTraining={() => setCurrentScreen("training")}
+          onOpenGacha={() => setCurrentScreen("gacha")}
+          onOpenStats={() => setCurrentScreen("stats")}
+        />
+      );
+      break;
 
-  if (currentScreen === "gacha") {
-    return <GachaView onBack={() => setCurrentScreen("main")} />;
-  }
+    case "stats":
+      screenContent = <GlobalStatsView onBack={() => setCurrentScreen("main")} />;
+      break;
 
-  if (currentScreen === "starter") {
-    return (
-      <div className="relative">
-        <StarterSelector />
-        <button
-          onClick={() => setCurrentScreen("main")}
-          className="fixed top-4 left-4 z-100 bg-surface-dark border-2 border-border p-2 font-display text-[0.6rem] text-muted hover:text-white transition-colors"
-        >
-          &lt; VOLVER
-        </button>
-      </div>
-    );
-  }
+    case "gacha":
+      screenContent = <GachaView onBack={() => setCurrentScreen("main")} />;
+      break;
 
-  if (currentScreen === "training-select") {
-    return <TrainingSelector onBack={() => setCurrentScreen("main")} />;
-  }
+    case "starter":
+      screenContent = (
+        <div className="relative">
+          <StarterSelector />
+          <button
+            onClick={() => setCurrentScreen("main")}
+            className="fixed top-4 left-4 z-50 bg-surface-dark border-2 border-border p-2 font-display text-[0.6rem] text-muted hover:text-white transition-colors"
+          >
+            &lt; VOLVER
+          </button>
+        </div>
+      );
+      break;
 
-  if (currentScreen === "training") {
-    return <TrainingLayout onNavigate={setCurrentScreen} />;
+    case "training-select":
+      screenContent = <TrainingSelector onBack={() => setCurrentScreen("main")} />;
+      break;
+
+    case "training":
+      screenContent = <TrainingLayout onNavigate={setCurrentScreen} />;
+      break;
+
+    case "game":
+    default:
+      screenContent = (
+        <div className="flex flex-col h-screen min-h-screen max-h-screen bg-surface overflow-hidden">
+          <PauseMenu onReturnToMenu={() => setCurrentScreen("main")} />
+          <header className="flex-none bg-surface-dark border-b-2 border-border p-2 z-10 sticky top-0 flex items-center justify-between shadow-pixel">
+            <h1 className="font-display text-text-heading text-foreground w-64 shrink-0 drop-shadow-sm">
+              POKÉ<span className="text-brand">IDLE</span>
+            </h1>
+            <div className="flex justify-center flex-1">
+              <SpeedControl
+                speed={run.speedMultiplier}
+                onChange={(s: any) => setRun((p) => ({ ...p, speedMultiplier: s }))}
+              />
+            </div>
+            <div className="w-64 shrink-0 flex justify-end gap-2">
+              <button
+                onClick={() => setRun((p) => ({ ...p, isPaused: true }))}
+                className="flex items-center justify-center p-2 bg-surface-alt border-2 border-border cursor-pointer hover:bg-surface-light hover:text-accent transition-colors"
+                title="Pausar Juego"
+              >
+                <Menu size={16} />
+              </button>
+            </div>
+          </header>
+
+          <div className="h-screen max-h-screen bg-black text-foreground flex flex-col md:flex-row overflow-hidden w-full relative">
+            <LootSelectionModal />
+            <MoveLearningModal />
+            <EvolutionModal />
+
+            <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+              {notifications.map((notif) => (
+                <EventToast
+                  key={notif.id}
+                  notification={notif}
+                  onDismiss={() => removeNotification(notif.id)}
+                />
+              ))}
+            </div>
+
+            <div className="flex-1 md:w-[320px] md:max-w-[320px] border-r border-border bg-surface overflow-y-auto hidden md:flex flex-col">
+              <RegionMap />
+              <TeamRoster />
+            </div>
+
+            <div className="flex-[1.5] flex flex-col min-w-[400px]">
+              <BattleView />
+              {run.isManualBattle && <ManualBattleHUD />}
+            </div>
+
+            <div className="flex-1 md:w-[320px] md:max-w-[320px] border-l border-border bg-surface overflow-hidden hidden md:flex flex-col">
+              <div className="flex-none flex flex-col border-b-2 border-border bg-surface">
+                <ZoneView />
+                <ItemBag />
+                <div className="bg-surface-dark border-t-2 border-border p-3 px-4 flex items-center shadow-inner min-h-[48px]">
+                  <div className="flex flex-wrap items-center gap-4">
+                    {Object.entries(run.items)
+                      .filter(([id, qty]) => (qty as number) > 0 && ITEMS[id]?.category === "ball")
+                      .map(([id, qty]) => (
+                        <div key={id} className="flex items-center gap-1.5 grayscale-[0.2] hover:grayscale-0 transition-all group" title={ITEMS[id]?.name}>
+                          <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${id}.png`} alt={id} className="w-6 h-6 rendering-pixelated group-hover:scale-110 transition-transform" />
+                          <span className="font-display text-[0.7rem] text-foreground font-bold">x{qty as number}</span>
+                        </div>
+                      ))}
+                    {Object.entries(run.items).filter(([id, qty]) => (qty as number) > 0 && ITEMS[id]?.category === "ball").length === 0 && (
+                      <span className="font-body text-[0.6rem] text-muted italic uppercase tracking-tighter">Sin Poké Balls disponibles</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 min-h-0 flex flex-col bg-surface-dark/30">
+                <BattleLog />
+              </div>
+            </div>
+
+            <div className="md:hidden p-4 text-center font-display text-[0.45rem] bg-surface text-brand border-t-2 border-brand/50 tracking-widest flex items-center justify-center">
+              SE RECOMIENDA PANTALLA ANCHA O ROTAR DISPOSITIVO
+            </div>
+          </div>
+        </div>
+      );
+      break;
   }
 
   return (
     <>
-      <div className="flex flex-col h-screen min-h-screen max-h-screen bg-surface overflow-hidden">
-        <PauseMenu onReturnToMenu={() => setCurrentScreen("main")} />
-        {/* HEADER */}
-        <header className="flex-none bg-surface-dark border-b-2 border-border p-2 z-10 sticky top-0 flex items-center justify-between shadow-pixel">
-          <h1 className="font-display text-text-heading text-foreground w-64 shrink-0 drop-shadow-sm">
-            POKÉ<span className="text-brand">IDLE</span>
-          </h1>
-          <div className="flex justify-center flex-1">
-            <SpeedControl
-              speed={run.speedMultiplier}
-              onChange={(s: any) =>
-                setRun((p) => ({ ...p, speedMultiplier: s }))
-              }
-            />
-          </div>
-          <div className="w-64 shrink-0 flex justify-end gap-2">
-            <button
-              onClick={() => setRun((p) => ({ ...p, isPaused: true }))}
-              className="flex items-center justify-center p-2 bg-surface-alt border-2 border-border cursor-pointer hover:bg-surface-light hover:text-accent transition-colors"
-              title="Pausar Juego"
-            >
-              <Menu size={16} />
-            </button>
-          </div>
-        </header>
-
-        <div className="h-screen max-h-screen bg-black text-foreground flex flex-col md:flex-row overflow-hidden w-full relative">
-          <LootSelectionModal />
-          <MoveLearningModal />
-          <EvolutionModal />
-
-          {/* Modals & Overlays */}
-          <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-            {notifications.map((notif) => (
-              <EventToast
-                key={notif.id}
-                notification={notif}
-                onDismiss={() => removeNotification(notif.id)}
-              />
-            ))}
-          </div>
-
-          {/* Left Panel */}
-          <div className="flex-1 md:w-[320px] md:max-w-[320px] border-r border-border bg-surface overflow-y-auto hidden md:flex flex-col">
-            <RegionMap />
-            <TeamRoster />
-          </div>
-
-          {/* Center Panel */}
-          <div className="flex-[1.5] flex flex-col min-w-[400px]">
-            <BattleView />
-            {run.isManualBattle && <ManualBattleHUD />}
-          </div>
-
-          {/* Right Panel */}
-          <div className="flex-1 md:w-[320px] md:max-w-[320px] border-l border-border bg-surface overflow-hidden hidden md:flex flex-col">
-            <div className="flex-none flex flex-col border-b-2 border-border bg-surface">
-              <ZoneView />
-              <ItemBag />
-
-              {/* Persistent Ball Inventory Bar */}
-              <div className="bg-surface-dark border-t-2 border-border p-3 px-4 flex items-center shadow-inner min-h-[48px]">
-                <div className="flex flex-wrap items-center gap-4">
-                  {Object.entries(run.items)
-                    .filter(
-                      ([id, qty]) =>
-                        (qty as number) > 0 && ITEMS[id]?.category === "ball",
-                    )
-                    .map(([id, qty]) => (
-                      <div
-                        key={id}
-                        className="flex items-center gap-1.5 grayscale-[0.2] hover:grayscale-0 transition-all group"
-                        title={ITEMS[id]?.name}
-                      >
-                        <img
-                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${id}.png`}
-                          alt={id}
-                          className="w-6 h-6 rendering-pixelated group-hover:scale-110 transition-transform"
-                        />
-                        <span className="font-display text-[0.7rem] text-foreground font-bold">
-                          x{qty as number}
-                        </span>
-                      </div>
-                    ))}
-                  {Object.entries(run.items).filter(
-                    ([id, qty]) =>
-                      (qty as number) > 0 && ITEMS[id]?.category === "ball",
-                  ).length === 0 && (
-                      <span className="font-body text-[0.6rem] text-muted italic uppercase tracking-tighter">
-                        Sin Poké Balls disponibles
-                      </span>
-                    )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 min-h-0 flex flex-col bg-surface-dark/30">
-              <BattleLog />
-            </div>
-          </div>
-
-          {/* Mobile Disclaimer */}
-          <div className="md:hidden p-4 text-center font-display text-[0.45rem] bg-surface text-brand border-t-2 border-brand/50 tracking-widest flex items-center justify-center">
-            SE RECOMIENDA PANTALLA ANCHA O ROTAR DISPOSITIVO
-          </div>
-        </div>
-      </div>
-
-      {/* OVERLAYS ROOT */}
-      {isBagOpen && <BagModal onClose={() => setIsBagOpen(false)} />}
-      <ZoneTransitionModal />
-      {showTutorial && <GameTutorialModal onClose={handleCloseTutorial} />}
-      {isAdmin && <DebuggerPanel />}
+      {screenContent}
+      {globalElements}
     </>
   );
 }
