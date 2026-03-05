@@ -13,6 +13,19 @@ export interface BattleViewProps {
   onMoveClick?: (moveId: number) => void;
 }
 
+const ENEMY_SPRITE_POSITION: Record<string, string> = {
+  "grass-route": "translate-y-[60px] -translate-x-[20px]",
+  "cave-dirt": "translate-y-[55px] -translate-x-[15px]",
+  "water-surf": "translate-y-[65px] -translate-x-[25px]",
+  "pond-water": "translate-y-[65px] -translate-x-[25px]",
+  "indoor-gray": "translate-y-[50px] -translate-x-[20px]",
+  "indoor-blue": "translate-y-[50px] -translate-x-[20px]",
+  "sand-route": "translate-y-[60px] -translate-x-[20px]",
+  "tower-psychic": "translate-y-[50px] -translate-x-[20px]",
+  "forest-green": "translate-y-[60px] -translate-x-[20px]",
+  "underwater": "translate-y-[70px] -translate-x-[30px]",
+};
+
 export function BattleView({ onMoveClick }: BattleViewProps) {
   const { run, setRun, training } = useGame();
 
@@ -180,7 +193,12 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
             </div>
 
             {/* Sprite Container */}
-            <div className="w-40 h-40 sm:w-56 sm:h-56 flex items-end justify-center relative mt-2 shrink-0 translate-y-[60px] -translate-x-[40px]">
+            <div
+              className={clsx(
+                "w-40 h-40 sm:w-56 sm:h-56 flex items-end justify-center relative mt-2 shrink-0",
+                ENEMY_SPRITE_POSITION[bgId] || "translate-y-[60px] -translate-x-[20px]"
+              )}
+            >
               <div className="absolute bottom-2 w-32 sm:w-48 h-10 rounded-[100%] bg-black/50 blur-[3px] -z-10"></div>
               <PixelSprite
                 pokemonId={enemyPokemon.pokemonId}

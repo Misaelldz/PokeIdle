@@ -32,7 +32,9 @@ export function getBossMultiplier(
   referenceBst: number,
 ): number {
   const ratio = teamAverageBst / referenceBst;
-  return Math.max(0.7, Math.min(1.5, ratio));
+  // Reduce punishing scaling for strong teams by using sqrt and capping lower
+  const flattenedRatio = Math.sqrt(ratio);
+  return Math.max(0.8, Math.min(1.2, flattenedRatio));
 }
 
 /**
@@ -44,9 +46,9 @@ export function scaleGymPokemon(
   isBoss: boolean,
 ): ActivePokemon {
   // 1. Scale IVs based on multiplier
-  // round((Multiplicador - 0.70) / 0.80 * 31)
-  const ivValue = Math.round(((multiplier - 0.7) / 0.8) * 31);
-  const clampedIv = Math.max(0, Math.min(31, ivValue));
+  // Scale between 15 and 20 based on multiplier (0.8 to 1.2)
+  const ivValue = Math.round(15 + ((multiplier - 0.8) / 0.4) * 5);
+  const clampedIv = Math.max(15, Math.min(20, ivValue));
 
   const scaledIvs = {
     hp: clampedIv,
