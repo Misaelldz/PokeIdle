@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useGame } from "../../../context/GameContext";
 import { ITEMS, type ItemCategory } from "../../../lib/items";
@@ -26,6 +26,14 @@ export function BagModal({ onClose }: BagModalProps) {
 
   const [useTargetModal, setUseTargetModal] = useState<string | null>(null);
   const [hoverItem, setHoverItem] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
 
   if (!run.isActive) return null;
 
@@ -81,30 +89,46 @@ export function BagModal({ onClose }: BagModalProps) {
         }));
       }
     } else {
-      const { success, newPokemon, newInventory, resultLog } =
-        await useItemOnPokemon(pokemon, useTargetModal, run.items);
+      const result = await useItemOnPokemon(pokemon, useTargetModal, run.items);
+      const { success, newPokemon, newInventory, resultLog } = result;
       if (success) {
-        setRun((prev) => ({
-          ...prev,
-          items: newInventory,
-          itemUsage: {
-            ...prev.itemUsage,
-            [useTargetModal]: (prev.itemUsage[useTargetModal] || 0) + 1,
-          },
-          team: prev.team.map((p) => (p.uid === pokemon!.uid ? newPokemon : p)),
-          currentBattle:
-            prev.currentBattle?.playerPokemon?.uid === pokemon!.uid
-              ? { ...prev.currentBattle, playerPokemon: newPokemon }
-              : prev.currentBattle,
-          battleLog: [
-            ...prev.battleLog,
-            {
-              id: Date.now().toString(),
-              text: resultLog,
-              type: "normal" as const,
+        const isTMPending = resultLog === "__PENDING_MOVE_LEARN__";
+        const pendingMove = (result as any)?.pendingMove ?? null;
+
+        setRun((prev) => {
+          const consumesTurn = prev.isManualBattle && prev.currentBattle &&
+            (itemDef.category === "heal" || itemDef.category === "battle" || itemDef.category === "tm");
+
+          return {
+            ...prev,
+            items: newInventory,
+            itemUsage: {
+              ...prev.itemUsage,
+              [useTargetModal]: (prev.itemUsage[useTargetModal] || 0) + 1,
             },
-          ].slice(-40),
-        }));
+            team: prev.team.map((p) => (p.uid === pokemon!.uid ? newPokemon : p)),
+            pendingMoveLearn: isTMPending && pendingMove
+              ? { pokemonUid: pokemon!.uid, pokemonName: pokemon!.name, newMove: pendingMove }
+              : prev.pendingMoveLearn,
+            currentBattle: prev.currentBattle
+              ? {
+                  ...prev.currentBattle,
+                  playerPokemon: prev.currentBattle.playerPokemon?.uid === pokemon!.uid
+                    ? newPokemon
+                    : prev.currentBattle.playerPokemon,
+                  ...(consumesTurn ? { manualActionQueue: { type: "item" as const, id: useTargetModal } } : {}),
+                }
+              : null,
+            battleLog: [
+              ...prev.battleLog,
+              ...(!isTMPending ? [{
+                id: Date.now().toString(),
+                text: resultLog,
+                type: "normal" as const,
+              }] : []),
+            ].slice(-40),
+          };
+        });
         setMeta((prev) => ({
           ...prev,
           totalItemsUsed: {
@@ -114,25 +138,6 @@ export function BagModal({ onClose }: BagModalProps) {
           },
         }));
       }
-    }
-
-    // Consumir turno en combate manual para objetos de curación o combate
-    if (
-      run.isManualBattle &&
-      run.currentBattle &&
-      (itemDef.category === "heal" || itemDef.category === "battle")
-    ) {
-      setRun((prev) =>
-        prev.currentBattle
-          ? {
-              ...prev,
-              currentBattle: {
-                ...prev.currentBattle,
-                manualActionQueue: { type: "item", id: useTargetModal! },
-              },
-            }
-          : prev,
-      );
     }
 
     setUseTargetModal(null);
@@ -218,7 +223,7 @@ export function BagModal({ onClose }: BagModalProps) {
   };
 
   const filteredAndSortedItems = useMemo(() => {
-    let entries = Object.entries(run.items).filter(([id, qty]) => qty > 0);
+    let entries = Object.entries(run.items).filter(([id, qty]) => (qty as number) > 0);
 
     // Filter Category
     if (activeTab !== "all") {
@@ -243,7 +248,7 @@ export function BagModal({ onClose }: BagModalProps) {
         const val = itemA.name.localeCompare(itemB.name);
         return sortOrder === "asc" ? val : -val;
       } else {
-        const val = a[1] - b[1];
+        const val = (a[1] as number) - (b[1] as number);
         return sortOrder === "asc" ? val : -val;
       }
     });
@@ -269,7 +274,7 @@ export function BagModal({ onClose }: BagModalProps) {
       }}
       className="crt-screen"
     >
-      <Card className="w-full max-w-4xl h-[85vh] flex flex-col relative" noPadding>
+      <Card className="w-full max-w-4xl h-[85vh] flex flex-col relative shadow-[10px_10px_0_rgba(0,0,0,0.5)]" noPadding>
         <button
           onClick={onClose}
           className="absolute -top-4 -right-4 w-10 h-10 bg-danger border-4 border-black text-white flex items-center justify-center hover:bg-red-500 hover:-translate-y-1 transition-transform z-10 shadow-pixel"
@@ -303,7 +308,7 @@ export function BagModal({ onClose }: BagModalProps) {
           </div>
 
           {/* MAIN CONTENT */}
-          <div className="flex-1 flex flex-col min-w-0 bg-surface">
+          <div className="flex-1 flex flex-col min-0 bg-surface">
             {/* TOOLBAR */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 border-b border-border bg-surface-dark shrink-0">
               <div className="flex-1 w-full relative">
@@ -354,7 +359,7 @@ export function BagModal({ onClose }: BagModalProps) {
             </div>
 
             {/* ITEM GRID */}
-            <div className="flex-1 overflow-y-auto p-4 content-start">
+            <div className="flex-1 overflow-y-auto p-4 content-start custom-scrollbar">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {filteredAndSortedItems.length === 0 ? (
                   <div className="col-span-full text-center py-10 font-body text-muted italic">
@@ -400,18 +405,21 @@ export function BagModal({ onClose }: BagModalProps) {
                             {item.name}
                           </div>
                           <div className="font-body text-[0.65rem] font-bold text-muted bg-surface-dark py-0.5 rounded px-2 inline-block">
-                            x{qty}
+                            x{qty as number}
                           </div>
                         </div>
 
                         {(item.category === "heal" ||
                           item.category === "held" ||
                           item.category === "evo" ||
-                          item.category === "ball") && (
+                          item.category === "ball" ||
+                          item.category === "battle" ||
+                          item.category === "tm" ||
+                          item.category === "berry") && (
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="px-3"
+                            className="px-3 text-[0.45rem]"
                             onClick={() => {
                               if (item.category === "ball") {
                                 handleThrowBall(id);
@@ -420,7 +428,7 @@ export function BagModal({ onClose }: BagModalProps) {
                               }
                             }}
                           >
-                            {item.category === "held" ? "EQUIPAR" : "USAR"}
+                            {item.category === "held" ? "EQUIPAR" : item.category === "tm" ? "ENSEÑAR" : "USAR"}
                           </Button>
                         )}
                       </div>
@@ -465,7 +473,7 @@ export function BagModal({ onClose }: BagModalProps) {
             confirmText="Listo"
             cancelText="Cancelar"
             message={
-              <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto px-1 pt-1 -mx-2">
+              <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto px-1 pt-1 -mx-2 custom-scrollbar">
                 <span className="text-[0.6rem] font-display text-muted uppercase tracking-widest mb-1 pl-1">
                   Selecciona al objetivo:
                 </span>

@@ -67,6 +67,7 @@ export const defaultRun: RunState = {
   itemUsage: {},
   pendingLootSelection: null,
   pendingMoveLearn: null,
+  pendingEvolution: null,
   pendingZoneTransition: false,
   pinnedItems: [],
   inheritanceProgress: {},

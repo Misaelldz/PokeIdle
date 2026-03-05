@@ -29,9 +29,14 @@ export function ZoneView() {
         <h2 className="font-display text-accent-blue text-sm uppercase drop-shadow-sm whitespace-nowrap overflow-hidden text-ellipsis mr-2 min-w-0">
           {currentZone.name}
         </h2>
-        <span className="font-display text-[0.6rem] text-white tracking-widest whitespace-nowrap shrink-0">
-          ZONA {run.currentZoneIndex + 1}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-display text-[0.7rem] text-brand drop-shadow-sm animate-pulse-slow">
+            ${run.money.toLocaleString()}
+          </span>
+          <span className="font-display text-[0.6rem] text-white tracking-widest whitespace-nowrap shrink-0">
+            ZONA {run.currentZoneIndex + 1}
+          </span>
+        </div>
       </div>
 
       {/* Roadmap visual */}

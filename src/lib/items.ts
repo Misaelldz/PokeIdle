@@ -37,7 +37,8 @@ export type ItemEffect =
   | { type: "mega_evo"; stoneId: string }
   | { type: "pp_restore"; amount: number | "full" }
   | { type: "friendship_boost" }
-  | { type: "passive" }; // held items handled entirely in engine
+  | { type: "passive" } // held items handled entirely in engine
+  | { type: "teach"; moveId: number; moveName: string };
 
 export interface Item {
   id: string;
@@ -47,6 +48,7 @@ export interface Item {
   category: ItemCategory;
   effect: ItemEffect;
   buyable: boolean;
+  lootable: boolean;
   shopPrice: number | null;
   condition?: (gameState: any) => boolean;
 }
@@ -71,6 +73,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: true,
+    lootable: true,
     shopPrice: 200,
   },
   "great-ball": {
@@ -82,6 +85,7 @@ export const ITEMS: Record<string, Item> = {
     effect: { type: "catch", catchMultiplier: 1.5 },
     buyable: true,
     shopPrice: 600,
+    lootable: true,
     condition: (gs: any) => (gs.gymsBadges?.length || 0) >= 1,
   },
   "ultra-ball": {
@@ -93,6 +97,7 @@ export const ITEMS: Record<string, Item> = {
     effect: { type: "catch", catchMultiplier: 2.0 },
     buyable: true,
     shopPrice: 1200,
+    lootable: true,
     condition: (gs: any) => (gs.gymsBadges?.length || 0) >= 3,
   },
   "master-ball": {
@@ -103,6 +108,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 255.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "safari-ball": {
@@ -113,6 +119,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "net-ball": {
@@ -124,6 +131,7 @@ export const ITEMS: Record<string, Item> = {
     effect: { type: "catch", catchMultiplier: 3.0 },
     buyable: true,
     shopPrice: 1000,
+    lootable: true,
     condition: (gs: any) => (gs.gymsBadges?.length || 0) >= 2,
   },
   "dive-ball": {
@@ -135,6 +143,7 @@ export const ITEMS: Record<string, Item> = {
     effect: { type: "catch", catchMultiplier: 3.5 },
     buyable: true,
     shopPrice: 1000,
+    lootable: true,
     condition: (gs: any) => (gs.gymsBadges?.length || 0) >= 2,
   },
   "nest-ball": {
@@ -145,6 +154,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: true,
+    lootable: true,
     shopPrice: 1000,
   },
   "repeat-ball": {
@@ -155,6 +165,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 3.5 },
     buyable: true,
+    lootable: true,
     shopPrice: 1000,
   },
   "timer-ball": {
@@ -165,6 +176,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: true,
+    lootable: true,
     shopPrice: 1000,
   },
   "luxury-ball": {
@@ -175,6 +187,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: true,
+    lootable: true,
     shopPrice: 1000,
   },
   "premier-ball": {
@@ -185,6 +198,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "dusk-ball": {
@@ -196,6 +210,7 @@ export const ITEMS: Record<string, Item> = {
     effect: { type: "catch", catchMultiplier: 3.5 },
     buyable: true,
     shopPrice: 1000,
+    lootable: true,
     condition: (gs: any) => (gs.gymsBadges?.length || 0) >= 2,
   },
   "heal-ball": {
@@ -206,6 +221,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: true,
+    lootable: true,
     shopPrice: 300,
   },
   "quick-ball": {
@@ -216,6 +232,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 5.0 },
     buyable: true,
+    lootable: true,
     shopPrice: 1000,
   },
   "cherish-ball": {
@@ -226,6 +243,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "fast-ball": {
@@ -236,6 +254,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 4.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "level-ball": {
@@ -246,6 +265,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "lure-ball": {
@@ -256,6 +276,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 3.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "heavy-ball": {
@@ -266,6 +287,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "love-ball": {
@@ -276,6 +298,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 8.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "friend-ball": {
@@ -286,6 +309,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "moon-ball": {
@@ -297,6 +321,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 4.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "sport-ball": {
@@ -307,6 +332,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "dream-ball": {
@@ -317,6 +343,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 4.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "beast-ball": {
@@ -327,6 +354,7 @@ export const ITEMS: Record<string, Item> = {
     category: "ball",
     effect: { type: "catch", catchMultiplier: 0.1 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
 
@@ -340,6 +368,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 20 },
     buyable: true,
+    lootable: true,
     shopPrice: 300,
   },
   "super-potion": {
@@ -350,6 +379,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 50 },
     buyable: true,
+    lootable: true,
     shopPrice: 700,
   },
   "hyper-potion": {
@@ -360,6 +390,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 200 },
     buyable: true,
+    lootable: true,
     shopPrice: 1200,
   },
   "max-potion": {
@@ -370,6 +401,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: "full" },
     buyable: true,
+    lootable: true,
     shopPrice: 2500,
   },
   "full-restore": {
@@ -380,6 +412,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: "full" },
     buyable: true,
+    lootable: true,
     shopPrice: 3000,
   },
   antidote: {
@@ -390,6 +423,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_status" },
     buyable: true,
+    lootable: true,
     shopPrice: 200,
   },
   awakening: {
@@ -400,6 +434,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_status" },
     buyable: true,
+    lootable: true,
     shopPrice: 250,
   },
   "burn-heal": {
@@ -410,6 +445,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_status" },
     buyable: true,
+    lootable: true,
     shopPrice: 250,
   },
   "ice-heal": {
@@ -420,6 +456,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_status" },
     buyable: true,
+    lootable: true,
     shopPrice: 250,
   },
   "paralyze-heal": {
@@ -430,6 +467,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_status" },
     buyable: true,
+    lootable: true,
     shopPrice: 200,
   },
   "full-heal": {
@@ -440,6 +478,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_status" },
     buyable: true,
+    lootable: true,
     shopPrice: 600,
   },
   revive: {
@@ -450,6 +489,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "revive", hpPercent: 0.5 },
     buyable: true,
+    lootable: true,
     shopPrice: 1500,
   },
   "max-revive": {
@@ -460,6 +500,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "revive", hpPercent: 1.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "sacred-ash": {
@@ -470,6 +511,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "revive", hpPercent: 1.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "berry-juice": {
@@ -480,6 +522,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 20 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "fresh-water": {
@@ -490,6 +533,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 30 },
     buyable: true,
+    lootable: true,
     shopPrice: 200,
   },
   "soda-pop": {
@@ -500,6 +544,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 50 },
     buyable: true,
+    lootable: true,
     shopPrice: 300,
   },
   lemonade: {
@@ -510,6 +555,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 80 },
     buyable: true,
+    lootable: true,
     shopPrice: 350,
   },
   "moomoo-milk": {
@@ -520,6 +566,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 100 },
     buyable: true,
+    lootable: true,
     shopPrice: 500,
   },
   "energy-powder": {
@@ -530,6 +577,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 60 },
     buyable: true,
+    lootable: true,
     shopPrice: 500,
   },
   "energy-root": {
@@ -540,6 +588,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_hp", amount: 120 },
     buyable: true,
+    lootable: true,
     shopPrice: 800,
   },
   "heal-powder": {
@@ -550,6 +599,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "heal_status" },
     buyable: true,
+    lootable: true,
     shopPrice: 450,
   },
   "revival-herb": {
@@ -560,6 +610,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "revive", hpPercent: 1.0 },
     buyable: true,
+    lootable: true,
     shopPrice: 2800,
   },
   ether: {
@@ -570,6 +621,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "pp_restore", amount: 10 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "max-ether": {
@@ -580,6 +632,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "pp_restore", amount: "full" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   elixir: {
@@ -590,6 +643,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "pp_restore", amount: 10 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "max-elixir": {
@@ -600,6 +654,7 @@ export const ITEMS: Record<string, Item> = {
     category: "heal",
     effect: { type: "pp_restore", amount: "full" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "pp-up": {
@@ -610,6 +665,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "rare-candy": {
@@ -620,6 +676,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "pp-max": {
@@ -630,6 +687,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
 
@@ -643,6 +701,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "stat_boost", stat: "hp", amount: 10 },
     buyable: true,
+    lootable: true,
     shopPrice: 9800,
   },
   protein: {
@@ -653,6 +712,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "stat_boost", stat: "attack", amount: 10 },
     buyable: true,
+    lootable: true,
     shopPrice: 9800,
   },
   iron: {
@@ -663,6 +723,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "stat_boost", stat: "defense", amount: 10 },
     buyable: true,
+    lootable: true,
     shopPrice: 9800,
   },
   calcium: {
@@ -673,6 +734,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "stat_boost", stat: "spAtk", amount: 10 },
     buyable: true,
+    lootable: true,
     shopPrice: 9800,
   },
   zinc: {
@@ -683,6 +745,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "stat_boost", stat: "spDef", amount: 10 },
     buyable: true,
+    lootable: true,
     shopPrice: 9800,
   },
   carbos: {
@@ -693,6 +756,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "stat_boost", stat: "speed", amount: 10 },
     buyable: true,
+    lootable: true,
     shopPrice: 9800,
   },
 
@@ -706,6 +770,7 @@ export const ITEMS: Record<string, Item> = {
     category: "battle",
     effect: { type: "stat_boost", stat: "attack", amount: 1 },
     buyable: true,
+    lootable: true,
     shopPrice: 500,
   },
   "x-defense": {
@@ -716,6 +781,7 @@ export const ITEMS: Record<string, Item> = {
     category: "battle",
     effect: { type: "stat_boost", stat: "defense", amount: 1 },
     buyable: true,
+    lootable: true,
     shopPrice: 550,
   },
   "x-sp-atk": {
@@ -726,6 +792,7 @@ export const ITEMS: Record<string, Item> = {
     category: "battle",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1 },
     buyable: true,
+    lootable: true,
     shopPrice: 350,
   },
   "x-sp-def": {
@@ -736,6 +803,7 @@ export const ITEMS: Record<string, Item> = {
     category: "battle",
     effect: { type: "stat_boost", stat: "spDef", amount: 1 },
     buyable: true,
+    lootable: true,
     shopPrice: 350,
   },
   "x-speed": {
@@ -746,6 +814,7 @@ export const ITEMS: Record<string, Item> = {
     category: "battle",
     effect: { type: "stat_boost", stat: "speed", amount: 1 },
     buyable: true,
+    lootable: true,
     shopPrice: 350,
   },
   "x-accuracy": {
@@ -756,6 +825,7 @@ export const ITEMS: Record<string, Item> = {
     category: "battle",
     effect: { type: "stat_boost", stat: "acc", amount: 1 },
     buyable: true,
+    lootable: true,
     shopPrice: 950,
   },
   "dire-hit": {
@@ -766,6 +836,7 @@ export const ITEMS: Record<string, Item> = {
     category: "battle",
     effect: { type: "stat_boost", stat: "crit", amount: 1 },
     buyable: true,
+    lootable: true,
     shopPrice: 650,
   },
   "guard-spec": {
@@ -777,6 +848,7 @@ export const ITEMS: Record<string, Item> = {
     category: "battle",
     effect: { type: "passive" },
     buyable: true,
+    lootable: true,
     shopPrice: 700,
   },
 
@@ -790,6 +862,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: true,
+    lootable: true,
     shopPrice: 2100,
   },
   "water-stone": {
@@ -800,6 +873,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: true,
+    lootable: true,
     shopPrice: 2100,
   },
   "thunder-stone": {
@@ -810,6 +884,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: true,
+    lootable: true,
     shopPrice: 2100,
   },
   "leaf-stone": {
@@ -820,6 +895,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: true,
+    lootable: true,
     shopPrice: 2100,
   },
   "moon-stone": {
@@ -830,6 +906,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: true,
+    lootable: true,
     shopPrice: 2100,
   },
   "sun-stone": {
@@ -840,6 +917,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: true,
+    lootable: true,
     shopPrice: 2100,
   },
   "shiny-stone": {
@@ -850,6 +928,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "dusk-stone": {
@@ -860,6 +939,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "dawn-stone": {
@@ -870,6 +950,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "ice-stone": {
@@ -880,6 +961,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "oval-stone": {
@@ -890,6 +972,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "stone" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "kings-rock": {
@@ -900,6 +983,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "metal-coat": {
@@ -911,6 +995,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonOfType(state, "steel") ||
@@ -924,6 +1009,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Horsea", "Seadra"]),
   },
@@ -935,6 +1021,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Porygon"]),
   },
@@ -946,6 +1033,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Porygon2"]),
   },
@@ -957,6 +1045,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Electabuzz"]),
   },
@@ -968,6 +1057,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Magmar"]),
   },
@@ -979,6 +1069,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Rhydon"]),
   },
@@ -990,6 +1081,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Dusclops"]),
   },
@@ -1001,6 +1093,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Feebas"]),
   },
@@ -1012,6 +1105,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Swirlix"]),
   },
@@ -1023,6 +1117,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Spritzee"]),
   },
@@ -1034,6 +1129,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "item" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Sneasel"]),
   },
@@ -1045,6 +1141,7 @@ export const ITEMS: Record<string, Item> = {
     category: "evo",
     effect: { type: "evolve", method: "item" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Gligar"]),
   },
@@ -1056,6 +1153,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.5 },
     buyable: true,
+    lootable: true,
     shopPrice: 5000,
   },
   "choice-scarf": {
@@ -1066,6 +1164,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "speed", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "choice-specs": {
@@ -1076,6 +1175,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "life-orb": {
@@ -1086,6 +1186,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.3 },
     buyable: true,
+    lootable: true,
     shopPrice: 4000,
   },
   "focus-band": {
@@ -1097,6 +1198,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: true,
+    lootable: true,
     shopPrice: 4000,
   },
   "focus-sash": {
@@ -1108,6 +1210,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "muscle-band": {
@@ -1118,6 +1221,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.1 },
     buyable: true,
+    lootable: true,
     shopPrice: 3000,
   },
   "wise-glasses": {
@@ -1128,6 +1232,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.1 },
     buyable: true,
+    lootable: true,
     shopPrice: 3000,
   },
   "assault-vest": {
@@ -1138,6 +1243,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spDef", amount: 1.5 },
     buyable: true,
+    lootable: true,
     shopPrice: 3500,
   },
   eviolite: {
@@ -1149,6 +1255,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "defense", amount: 1.5 },
     buyable: true,
+    lootable: true,
     shopPrice: 3500,
   },
   "rocky-helmet": {
@@ -1159,6 +1266,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "air-balloon": {
@@ -1170,6 +1278,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "red-card": {
@@ -1181,6 +1290,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "eject-button": {
@@ -1192,6 +1302,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "shed-shell": {
@@ -1202,6 +1313,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "white-herb": {
@@ -1212,6 +1324,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "mental-herb": {
@@ -1222,6 +1335,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "power-herb": {
@@ -1232,6 +1346,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "scope-lens": {
@@ -1242,6 +1357,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "razor-claw-held": {
@@ -1252,6 +1368,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "wide-lens": {
@@ -1262,6 +1379,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "zoom-lens": {
@@ -1272,6 +1390,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "bright-powder": {
@@ -1282,6 +1401,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "quick-claw": {
@@ -1293,6 +1413,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "custap-berry": {
@@ -1304,6 +1425,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "lagging-tail": {
@@ -1314,6 +1436,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "iron-ball": {
@@ -1325,6 +1448,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "speed", amount: 0.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "macho-brace": {
@@ -1335,6 +1459,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "lucky-egg": {
@@ -1345,6 +1470,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "xp_boost", multiplier: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "amulet-coin": {
@@ -1355,6 +1481,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "soothe-bell": {
@@ -1365,6 +1492,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "friendship_boost" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "shell-bell": {
@@ -1375,6 +1503,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "black-sludge": {
@@ -1385,6 +1514,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "toxic-orb": {
@@ -1395,6 +1525,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "flame-orb": {
@@ -1405,6 +1536,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "sticky-barb": {
@@ -1415,6 +1547,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "big-root": {
@@ -1425,6 +1558,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "binding-band": {
@@ -1436,6 +1570,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "safety-goggles": {
@@ -1446,6 +1581,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "terrain-extender": {
@@ -1456,6 +1592,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "room-service": {
@@ -1466,6 +1603,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "utility-umbrella": {
@@ -1476,6 +1614,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
 
@@ -1489,6 +1628,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "psychic"),
   },
@@ -1500,6 +1640,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "fire"),
   },
@@ -1511,6 +1652,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "water"),
   },
@@ -1522,6 +1664,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "grass"),
   },
@@ -1533,6 +1676,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "electric"),
   },
@@ -1544,6 +1688,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "dark"),
   },
@@ -1555,6 +1700,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "fighting"),
   },
@@ -1566,6 +1712,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "dragon"),
   },
@@ -1577,6 +1724,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "rock"),
   },
@@ -1588,6 +1736,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "bug"),
   },
@@ -1599,6 +1748,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "poison"),
   },
@@ -1610,6 +1760,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "ice"),
   },
@@ -1621,6 +1772,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "ghost"),
   },
@@ -1632,6 +1784,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "ground"),
   },
@@ -1643,6 +1796,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "flying"),
   },
@@ -1654,6 +1808,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "normal"),
   },
@@ -1665,6 +1820,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonOfType(state, "fairy"),
   },
@@ -1676,6 +1832,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.1 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
 
@@ -1689,6 +1846,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 2.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.CUBONE),
@@ -1701,6 +1859,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 2.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.PIKACHU),
@@ -1713,6 +1872,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 2.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.CLAMPERL),
@@ -1725,6 +1885,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spDef", amount: 2.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.CLAMPERL),
@@ -1737,6 +1898,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.FARFETCHD),
@@ -1749,6 +1911,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.CHANSEY),
@@ -1761,6 +1924,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "defense", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.DITTO),
@@ -1773,6 +1937,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "speed", amount: 2.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.DITTO),
@@ -1785,6 +1950,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.LATIAS_LATIOS),
@@ -1798,6 +1964,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.DIALGA),
@@ -1811,6 +1978,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.PALKIA),
@@ -1824,6 +1992,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) =>
       hasPokemonWithName(state, ITEM_SPECIFIC_POKEMON.GIRATINA),
@@ -1840,6 +2009,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "lax-incense": {
@@ -1851,6 +2021,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "luck-incense": {
@@ -1862,6 +2033,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "pure-incense": {
@@ -1873,6 +2045,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "rock-incense": {
@@ -1884,6 +2057,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "attack", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "rose-incense": {
@@ -1895,6 +2069,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "sea-incense": {
@@ -1906,6 +2081,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "wave-incense": {
@@ -1917,6 +2093,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "odd-incense": {
@@ -1928,6 +2105,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
 
@@ -1941,6 +2119,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "venusaurite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Venusaur"]),
   },
@@ -1952,6 +2131,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "charizardite-x" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Charizard"]),
   },
@@ -1963,6 +2143,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "charizardite-y" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Charizard"]),
   },
@@ -1974,6 +2155,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "blastoisinite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Blastoise"]),
   },
@@ -1985,6 +2167,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "beedrillite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Beedrill"]),
   },
@@ -1996,6 +2179,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "pidgeotite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Pidgeot"]),
   },
@@ -2007,6 +2191,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "alakazite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Alakazam"]),
   },
@@ -2018,6 +2203,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "slowbronite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Slowbro"]),
   },
@@ -2029,6 +2215,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "gengarite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Gengar"]),
   },
@@ -2040,6 +2227,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "kangaskhanite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Kangaskhan"]),
   },
@@ -2051,6 +2239,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "pinsirite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Pinsir"]),
   },
@@ -2062,6 +2251,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "gyaradosite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Gyarados"]),
   },
@@ -2073,6 +2263,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "aerodactylite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Aerodactyl"]),
   },
@@ -2084,6 +2275,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "mewtwonite-x" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Mewtwo"]),
   },
@@ -2095,6 +2287,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "mewtwonite-y" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Mewtwo"]),
   },
@@ -2106,6 +2299,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "ampharosite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Ampharos"]),
   },
@@ -2117,6 +2311,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "steelixite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Steelix"]),
   },
@@ -2128,6 +2323,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "scizorite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Scizor"]),
   },
@@ -2139,6 +2335,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "heracronite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Heracross"]),
   },
@@ -2150,6 +2347,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "houndoominite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Houndoom"]),
   },
@@ -2161,6 +2359,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "tyranitarite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Tyranitar"]),
   },
@@ -2172,6 +2371,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "sceptilite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Sceptile"]),
   },
@@ -2183,6 +2383,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "blazikenite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Blaziken"]),
   },
@@ -2194,6 +2395,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "swampertite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Swampert"]),
   },
@@ -2205,6 +2407,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "gardevoirite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Gardevoir"]),
   },
@@ -2216,6 +2419,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "sablenite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Sableye"]),
   },
@@ -2227,6 +2431,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "mawilite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Mawile"]),
   },
@@ -2238,6 +2443,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "aggronite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Aggron"]),
   },
@@ -2249,6 +2455,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "medichamite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Medicham"]),
   },
@@ -2260,6 +2467,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "manectite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Manectric"]),
   },
@@ -2271,6 +2479,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "sharpedonite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Sharpedo"]),
   },
@@ -2282,6 +2491,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "cameruptite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Camerupt"]),
   },
@@ -2293,6 +2503,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "altarianite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Altaria"]),
   },
@@ -2304,6 +2515,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "banettite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Banette"]),
   },
@@ -2315,6 +2527,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "absolite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Absol"]),
   },
@@ -2326,6 +2539,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "glalitite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Glalie"]),
   },
@@ -2337,6 +2551,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "salamencite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Salamence"]),
   },
@@ -2348,6 +2563,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "metagrossite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Metagross"]),
   },
@@ -2359,6 +2575,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "latiasite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Latias"]),
   },
@@ -2370,6 +2587,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "latiosite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Latios"]),
   },
@@ -2381,6 +2599,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "lopunnite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Lopunny"]),
   },
@@ -2392,6 +2611,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "garchompite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Garchomp"]),
   },
@@ -2403,6 +2623,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "lucarionite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Lucario"]),
   },
@@ -2414,6 +2635,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "abomasite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Abomasnow"]),
   },
@@ -2425,6 +2647,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "galladite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Gallade"]),
   },
@@ -2436,6 +2659,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "audinite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Audino"]),
   },
@@ -2447,6 +2671,7 @@ export const ITEMS: Record<string, Item> = {
     category: "held",
     effect: { type: "mega_evo", stoneId: "diancite" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasPokemonWithName(state, ["Diancie"]),
   },
@@ -2461,6 +2686,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_hp", amount: 10 },
     buyable: true,
+    lootable: true,
     shopPrice: 100,
   },
   "sitrus-berry": {
@@ -2471,6 +2697,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_hp", amount: 0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "lum-berry": {
@@ -2481,6 +2708,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_status" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "leppa-berry": {
@@ -2491,6 +2719,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "pp_restore", amount: 10 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "rawst-berry": {
@@ -2501,6 +2730,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_status" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "aspear-berry": {
@@ -2511,6 +2741,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_status" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "pecha-berry": {
@@ -2521,6 +2752,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_status" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "cheri-berry": {
@@ -2531,6 +2763,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_status" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "chesto-berry": {
@@ -2541,6 +2774,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_status" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "persim-berry": {
@@ -2551,6 +2785,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_status" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "aguav-berry": {
@@ -2561,6 +2796,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_hp", amount: 0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "figy-berry": {
@@ -2571,6 +2807,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_hp", amount: 0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "iapapa-berry": {
@@ -2581,6 +2818,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_hp", amount: 0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "mago-berry": {
@@ -2591,6 +2829,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_hp", amount: 0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "wiki-berry": {
@@ -2601,6 +2840,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_hp", amount: 0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "salac-berry": {
@@ -2611,6 +2851,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "stat_boost", stat: "speed", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "petaya-berry": {
@@ -2621,6 +2862,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "stat_boost", stat: "spAtk", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "apicot-berry": {
@@ -2631,6 +2873,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "stat_boost", stat: "spDef", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "lansat-berry": {
@@ -2641,6 +2884,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "liechi-berry": {
@@ -2651,6 +2895,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "stat_boost", stat: "attack", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "ganlon-berry": {
@@ -2661,6 +2906,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "stat_boost", stat: "defense", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "starf-berry": {
@@ -2671,6 +2917,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "enigma-berry": {
@@ -2681,6 +2928,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "heal_hp", amount: 0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "jaboca-berry": {
@@ -2691,6 +2939,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "rowap-berry": {
@@ -2701,6 +2950,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "kee-berry": {
@@ -2711,6 +2961,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "stat_boost", stat: "defense", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "maranga-berry": {
@@ -2721,6 +2972,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "stat_boost", stat: "spDef", amount: 1.5 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "roseli-berry": {
@@ -2731,6 +2983,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "occa-berry": {
@@ -2741,6 +2994,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "passho-berry": {
@@ -2751,6 +3005,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "wacan-berry": {
@@ -2762,6 +3017,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "rindo-berry": {
@@ -2772,6 +3028,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "yache-berry": {
@@ -2782,6 +3039,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "chople-berry": {
@@ -2792,6 +3050,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "kebia-berry": {
@@ -2802,6 +3061,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "shuca-berry": {
@@ -2812,6 +3072,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "coba-berry": {
@@ -2823,6 +3084,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "payapa-berry": {
@@ -2834,6 +3096,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "tanga-berry": {
@@ -2844,6 +3107,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "charti-berry": {
@@ -2854,6 +3118,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "kasib-berry": {
@@ -2865,6 +3130,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "haban-berry": {
@@ -2875,6 +3141,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "colbur-berry": {
@@ -2886,6 +3153,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "babiri-berry": {
@@ -2896,6 +3164,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "chilan-berry": {
@@ -2906,6 +3175,7 @@ export const ITEMS: Record<string, Item> = {
     category: "berry",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
 
@@ -2919,6 +3189,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "xp_boost", multiplier: 1.0 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "mega-bracelet": {
@@ -2929,17 +3200,130 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "passive" },
     buyable: false,
+    lootable: false,
     shopPrice: null,
     condition: (state) => hasMegaEvolutionCandidate(state),
   },
-  "linking-cord": {
-    id: "linking-cord",
-    name: "Cordón de Enlace",
-    spriteSlug: "linking-cord",
+  "cable-link": {
+    id: "cable-link",
+    name: "Cable Link",
+    spriteSlug: "link-cable",
     description: "Evoluciona a Pokémon que requieren intercambio.",
     category: "evo",
     effect: { type: "evolve", method: "trade" },
     buyable: true,
+    lootable: true,
+    shopPrice: 2000,
+  },
+  // ─── MTs (Máquinas Técnicas) ───────────────────────────────────────────────
+  "mt-megapuño": {
+    id: "mt-megapuño",
+    name: "MT Megapuño",
+    spriteSlug: "tm-normal",
+    description: "Enseña Megapuño. Potente golpe físico de tipo Normal.",
+    category: "tm",
+    effect: { type: "teach", moveId: 5, moveName: "Megapuño" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 1500,
+  },
+  "mt-lanzallamas": {
+    id: "mt-lanzallamas",
+    name: "MT Lanzallamas",
+    spriteSlug: "tm-fire",
+    description: "Enseña Lanzallamas. Puede quemar al rival.",
+    category: "tm",
+    effect: { type: "teach", moveId: 53, moveName: "Lanzallamas" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 2000,
+  },
+  "mt-rayo": {
+    id: "mt-rayo",
+    name: "MT Rayo",
+    spriteSlug: "tm-electric",
+    description: "Enseña Rayo. Puede paralizar al rival.",
+    category: "tm",
+    effect: { type: "teach", moveId: 87, moveName: "Rayo" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 2000,
+  },
+  "mt-surf": {
+    id: "mt-surf",
+    name: "MT Surf",
+    spriteSlug: "tm-water",
+    description: "Enseña Surf. Potente movimiento de tipo Agua.",
+    category: "tm",
+    effect: { type: "teach", moveId: 57, moveName: "Surf" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 2000,
+  },
+  "mt-psiquico": {
+    id: "mt-psiquico",
+    name: "MT Psíquico",
+    spriteSlug: "tm-psychic",
+    description: "Enseña Psíquico. Puede bajar la Def. Esp. del rival.",
+    category: "tm",
+    effect: { type: "teach", moveId: 94, moveName: "Psíquico" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 2000,
+  },
+  "mt-terremoto": {
+    id: "mt-terremoto",
+    name: "MT Terremoto",
+    spriteSlug: "tm-ground",
+    description: "Enseña Terremoto. Poderoso movimiento sísmico.",
+    category: "tm",
+    effect: { type: "teach", moveId: 89, moveName: "Terremoto" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 2500,
+  },
+  "mt-tinieblas": {
+    id: "mt-tinieblas",
+    name: "MT Tinieblas",
+    spriteSlug: "tm-dark",
+    description: "Enseña Tinieblas. Movimiento físico de tipo Siniestro.",
+    category: "tm",
+    effect: { type: "teach", moveId: 212, moveName: "Tinieblas" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 1500,
+  },
+  "mt-rayohelado": {
+    id: "mt-rayohelado",
+    name: "MT Rayo Hielo",
+    spriteSlug: "tm-ice",
+    description: "Enseña Rayo Hielo. Puede congelar al rival.",
+    category: "tm",
+    effect: { type: "teach", moveId: 58, moveName: "Rayo Hielo" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 2000,
+  },
+  "mt-dragoaliento": {
+    id: "mt-dragoaliento",
+    name: "MT Dragoaliento",
+    spriteSlug: "tm-dragon",
+    description: "Enseña Dragoaliento. Puede paralizar al rival.",
+    category: "tm",
+    effect: { type: "teach", moveId: 225, moveName: "Dragoaliento" },
+    buyable: true,
+    lootable: true,
+    shopPrice: 2500,
+  },
+  "mt-trituradora": {
+    id: "mt-trituradora",
+    name: "MT Trituradora",
+    spriteSlug: "tm-steel",
+    description: "Enseña Trituradora. Puede bajar la Defensa del rival.",
+    category: "tm",
+    effect: { type: "teach", moveId: 242, moveName: "Trituradora" },
+    buyable: true,
+    lootable: true,
     shopPrice: 2000,
   },
   "carta-bosque": {
@@ -2950,6 +3334,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "xp_boost", multiplier: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "carta-cueva": {
@@ -2960,6 +3345,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "xp_boost", multiplier: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "carta-monte": {
@@ -2970,6 +3356,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "xp_boost", multiplier: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "carta-mar": {
@@ -2980,6 +3367,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "xp_boost", multiplier: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
   "carta-ciudad": {
@@ -2990,6 +3378,7 @@ export const ITEMS: Record<string, Item> = {
     category: "special",
     effect: { type: "xp_boost", multiplier: 1.2 },
     buyable: false,
+    lootable: false,
     shopPrice: null,
   },
 };
@@ -3003,7 +3392,7 @@ export function generateLootOptions(
   const buyables = Object.values(ITEMS)
     .filter((item) => {
       const isValidCategory = !excludeCategories.includes(item.category);
-      if (!item.buyable || !isValidCategory) return false;
+      if (!item.lootable || !isValidCategory) return false;
       if (item.condition && gameState) {
         return item.condition(gameState);
       }

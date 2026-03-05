@@ -25,6 +25,7 @@ import { GachaView } from "../../features/meta/components/GachaView";
 import { GlobalStatsView } from "../../features/meta/components/GlobalStatsView";
 import { GameTutorialModal } from "../../features/run/components/GameTutorialModal";
 import { MoveLearningModal } from "../../features/run/components/MoveLearningModal";
+import { EvolutionModal } from "../../features/run/components/EvolutionModal";
 
 export function GameLayout() {
   const {
@@ -423,6 +424,7 @@ export function GameLayout() {
         <div className="h-screen max-h-screen bg-black text-foreground flex flex-col md:flex-row overflow-hidden w-full relative">
           <LootSelectionModal />
           <MoveLearningModal />
+          <EvolutionModal />
 
           {/* Modals & Overlays */}
           <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">

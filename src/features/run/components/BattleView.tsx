@@ -10,6 +10,7 @@ import { SwitchPokemonModal } from "./SwitchPokemonModal";
 import { clsx } from "clsx";
 import { useBattleAnimation } from "../hooks/useBattleAnimation";
 import { PokeballCaptureAnimation } from "./PokeballCaptureAnimation";
+import { Button } from "../../../components/ui/Button";
 
 export interface BattleViewProps {
   onMoveClick?: (moveId: number) => void;
@@ -82,8 +83,17 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
     captured: boolean | null;
   }>({ active: false, captured: null });
   const [enemyHidden, setEnemyHidden] = useState(false);
+  const [showGameOverOptions, setShowGameOverOptions] = useState(false);
 
   // Sync capture animation state from battle.pendingCaptureAnim
+  useEffect(() => {
+    if (battle?.phase === "defeat") {
+      const timer = setTimeout(() => setShowGameOverOptions(true), 2500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowGameOverOptions(false);
+    }
+  }, [battle?.phase]);
   useEffect(() => {
     const pca = battle?.pendingCaptureAnim;
     if (!pca) {
@@ -477,6 +487,42 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
             }}
           />
         )}
+
+      {/* Game Over Overlay */}
+      {battle?.phase === "defeat" && (
+        <div className="absolute inset-0 z-[110] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-1000">
+          <div className="bg-danger/20 border-y-4 border-danger w-full py-8 mb-12 flex flex-col items-center">
+            <h2 className="font-display text-3xl text-danger drop-shadow-[0_0_15px_rgba(255,0,0,0.5)] animate-pulse tracking-[0.3em]">
+              GAME OVER
+            </h2>
+            <p className="font-body text-white text-xs mt-2 uppercase tracking-widest opacity-80">
+              Tu equipo no puede continuar
+            </p>
+          </div>
+
+          <div className={clsx(
+            "flex flex-col gap-4 w-full max-w-xs transition-all duration-700",
+            showGameOverOptions ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+          )}>
+            <Button
+              onClick={() => setRun((prev) => ({ ...prev, isActive: false, team: [], currentBattle: null }))}
+              variant="primary"
+              size="lg"
+              className="w-full border-2 border-white shadow-[4px_4px_0_white]"
+            >
+              VOLVER AL INICIO
+            </Button>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="secondary"
+              size="lg"
+              className="w-full text-danger border-2 border-danger opacity-80 hover:opacity-100"
+            >
+              REINICIAR RUN
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

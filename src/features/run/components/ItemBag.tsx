@@ -56,30 +56,46 @@ export function ItemBag() {
         }));
       }
     } else {
-      const { success, newPokemon, newInventory, resultLog } =
-        await useItemOnPokemon(pokemon, useTargetModal, run.items);
+      const result = await useItemOnPokemon(pokemon, useTargetModal, run.items);
+      const { success, newPokemon, newInventory, resultLog } = result;
       if (success) {
-        setRun((prev) => ({
-          ...prev,
-          items: newInventory,
-          itemUsage: {
-            ...prev.itemUsage,
-            [useTargetModal]: (prev.itemUsage[useTargetModal] || 0) + 1,
-          },
-          team: prev.team.map((p) => (p.uid === pokemon!.uid ? newPokemon : p)),
-          currentBattle:
-            prev.currentBattle?.playerPokemon?.uid === pokemon!.uid
-              ? { ...prev.currentBattle, playerPokemon: newPokemon }
-              : prev.currentBattle,
-          battleLog: [
-            ...prev.battleLog,
-            {
-              id: Date.now().toString(),
-              text: resultLog,
-              type: "normal" as const,
+        const isTMPending = resultLog === "__PENDING_MOVE_LEARN__";
+        const pendingMove = (result as any)?.pendingMove ?? null;
+
+        setRun((prev) => {
+          const consumesTurn = prev.isManualBattle && prev.currentBattle &&
+            (itemDef.category === "heal" || itemDef.category === "battle" || itemDef.category === "tm");
+
+          return {
+            ...prev,
+            items: newInventory,
+            itemUsage: {
+              ...prev.itemUsage,
+              [useTargetModal]: (prev.itemUsage[useTargetModal] || 0) + 1,
             },
-          ].slice(-40),
-        }));
+            team: prev.team.map((p) => (p.uid === pokemon!.uid ? newPokemon : p)),
+            pendingMoveLearn: isTMPending && pendingMove
+              ? { pokemonUid: pokemon!.uid, pokemonName: pokemon!.name, newMove: pendingMove }
+              : prev.pendingMoveLearn,
+            currentBattle: prev.currentBattle
+              ? {
+                  ...prev.currentBattle,
+                  playerPokemon: prev.currentBattle.playerPokemon?.uid === pokemon!.uid
+                    ? newPokemon
+                    : prev.currentBattle.playerPokemon,
+                  ...(consumesTurn ? { manualActionQueue: { type: "item" as const, id: useTargetModal } } : {}),
+                }
+              : null,
+            battleLog: [
+              ...prev.battleLog,
+              ...(!isTMPending ? [{
+                id: Date.now().toString(),
+                text: resultLog,
+                type: "normal" as const,
+              }] : []),
+            ].slice(-40),
+          };
+        });
         setMeta((prev) => ({
           ...prev,
           totalItemsUsed: {
@@ -89,25 +105,6 @@ export function ItemBag() {
           },
         }));
       }
-    }
-
-    // Consumir turno en combate manual para objetos de curación o combate
-    if (
-      run.isManualBattle &&
-      run.currentBattle &&
-      (itemDef.category === "heal" || itemDef.category === "battle")
-    ) {
-      setRun((prev) =>
-        prev.currentBattle
-          ? {
-              ...prev,
-              currentBattle: {
-                ...prev.currentBattle,
-                manualActionQueue: { type: "item", id: useTargetModal! },
-              },
-            }
-          : prev,
-      );
     }
 
     setUseTargetModal(null);
@@ -242,6 +239,7 @@ export function ItemBag() {
                       item.category === "evo" ||
                       item.category === "ball" ||
                       item.category === "battle" ||
+                      item.category === "tm" ||
                       item.category === "berry") && (
                       <Button
                         variant="secondary"
@@ -255,7 +253,7 @@ export function ItemBag() {
                         }}
                         className="px-2 py-1 text-[0.45rem]"
                       >
-                        {item.category === "held" ? "EQUIPAR" : "USAR"}
+                        {item.category === "held" ? "EQUIPAR" : item.category === "tm" ? "ENSEÑAR" : "USAR"}
                       </Button>
                     )}
                   </div>

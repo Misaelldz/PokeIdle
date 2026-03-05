@@ -363,11 +363,12 @@ export function ZoneTransitionModal() {
 
             {/* Shop Filters */}
             <div className="flex flex-wrap items-center gap-2 p-4 border-b-2 border-border/50 shrink-0 bg-surface-dark">
-              {["All", "ball", "heal", "battle", "berry", "held"].map((cat) => {
+              {["All", "ball", "heal", "tm", "battle", "berry", "held"].map((cat) => {
                 const labelMap: Record<string, string> = {
                   All: "TODO",
                   ball: "BALLS",
                   heal: "MEDICINAS",
+                  tm: "MTs",
                   battle: "COMBATE",
                   berry: "BAYAS",
                   held: "EQUIPABLES",

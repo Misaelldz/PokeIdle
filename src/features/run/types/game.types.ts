@@ -160,6 +160,14 @@ export interface MoveLearnData {
   newMove: ActiveMove;
 }
 
+export interface EvolutionData {
+  pokemonUid: string;
+  fromName: string;
+  toName: string;
+  toId: number;        // new pokemonId
+  reason: string;      // e.g. "nivel 16" or "Piedra Fuego"
+}
+
 export interface RunState {
   runId: string;
   startedAt: number;
@@ -204,6 +212,7 @@ export interface RunState {
 
   pendingLootSelection: string[] | null;
   pendingMoveLearn: MoveLearnData | null;
+  pendingEvolution: EvolutionData | null;
   pendingZoneTransition: boolean;
   pinnedItems: string[]; // slug
   inheritanceProgress: Record<number, InheritanceProgress>;

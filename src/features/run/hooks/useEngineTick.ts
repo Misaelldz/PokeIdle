@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useGame } from "../../../context/GameContext";
 import { useGameLoop } from "./useGameLoop";
 import {
@@ -28,6 +28,8 @@ import { REGIONS } from "../../../lib/regions";
 import {
   getPokemonData,
   learnMovesOnLevelUp,
+  getPokemonSpecies,
+  getEvolutionChain,
 } from "../services/pokeapi.service";
 import { ITEMS, generateLootOptions } from "../../../lib/items";
 import { generateUid } from "../../../utils/random";
@@ -37,6 +39,7 @@ import {
   getBossMultiplier,
   scaleGymPokemon,
 } from "../../../engine/boss.engine";
+import { calculateMoneyGain } from "../../../engine/economy.engine";
 
 export function useEngineTick() {
   const { run, setRun, setMeta, notify } = useGame();
@@ -51,6 +54,7 @@ export function useEngineTick() {
       run.isPaused ||
       run.pendingLootSelection ||
       run.pendingMoveLearn ||
+      run.pendingEvolution ||
       run.pendingZoneTransition
     )
       return;
@@ -317,18 +321,49 @@ export function useEngineTick() {
         return state;
       }
       
-      const currentBattle = state.currentBattle;
-      if (!currentBattle) {
-        turnStateRef.current = "idle";
-        return state;
+      let nextState = { ...state };
+      let logs = [...nextState.battleLog];
+
+      // --- SYNC TEAM HP ---
+      // Ensure the team array always reflects current HP from battle state
+      if (nextState.currentBattle?.playerPokemon) {
+        const active = nextState.currentBattle.playerPokemon;
+        nextState.team = nextState.team.map((p) =>
+          p.uid === active.uid
+            ? { ...p, currentHP: active.currentHP, status: active.status }
+            : p,
+        );
       }
 
-      let nextState = { ...state };
-      let bState = { ...currentBattle };
-      let logs = [...nextState.battleLog];
+      // --- DEFEAT CHECK ---
+      const activePokemon = getNextActivePokemon(nextState.team);
+      if (!activePokemon && nextState.currentBattle?.phase !== "defeat") {
+        if (nextState.currentBattle) {
+          nextState.currentBattle.phase = "defeat";
+          nextState.battleLog = [
+            ...nextState.battleLog,
+            {
+              id: Date.now().toString(),
+              text: "¡Tu equipo ha sido derrotado!",
+              type: "danger" as const,
+            },
+          ].slice(-40);
+        } else {
+          // If no battle is active but team is dead, ensure we are not "active"
+          nextState.isActive = false;
+        }
+        return nextState;
+      }
+
+      const bState = { ...nextState.currentBattle } as import("../types/game.types").BattleState;
       const pushLog = (text: string, type: any = "normal") => {
         logs.push({ id: generateUid(), text, type });
       };
+
+      if (!bState) {
+        turnStateRef.current = "idle";
+        return nextState;
+      }
 
       if (bState.playerPokemon.currentHP === 0) {
         if (!nextState.isManualBattle) {
@@ -362,6 +397,9 @@ export function useEngineTick() {
                 String(m.moveId) === String(bState.manualActionQueue?.id),
             );
             usedManualTurn = true;
+          } else if (bState.manualActionQueue?.type === "item") {
+            // Item was already applied in ItemBag — just consume the turn
+            usedManualTurn = true;
           } else if (bState.manualActionQueue?.type === "switch") {
             const targetUid = bState.manualActionQueue.id;
             const nextP = nextState.team.find((p) => p.uid === targetUid);
@@ -372,14 +410,11 @@ export function useEngineTick() {
               nextP.uid !== bState.playerPokemon.uid
             ) {
               pushLog(`¡Adelante ${nextP.name}!`, "normal");
-                bState.playerPokemon = nextP;
-                usedManualTurn = true;
-              }
-            } else if (bState.manualActionQueue?.type === "item") {
-              // Item ya fue aplicado en ItemBag — solo consumir el turno
+              bState.playerPokemon = nextP;
               usedManualTurn = true;
             }
-            bState.manualActionQueue = undefined;
+          }
+          bState.manualActionQueue = undefined;
         }
 
         if (!pMove && !usedManualTurn) {
@@ -485,7 +520,7 @@ export function useEngineTick() {
           const usedManual = isPlayer ? bState.usedManualTurn : false;
           
           let resolvedMove = move;
-          if (isPlayer && !resolvedMove) {
+          if (isPlayer && !resolvedMove && !usedManual) {
             // Fallback: re-select best move in case playerCurrentMove was lost between ticks
             resolvedMove = chooseBestMove(
               bState.playerPokemon,
@@ -713,6 +748,15 @@ export function useEngineTick() {
         // --- CHECK FOR DEFEAT/VICTORY ---
         if (bState.enemyPokemon.currentHP === 0) {
            pushLog(`¡${bState.enemyPokemon.name} enemigo se ha debilitado!`, "faint");
+
+           const moneyReward = calculateMoneyGain(
+             bState.enemyPokemon.level,
+             bState.type,
+             bState.isBossBattle
+           );
+           nextState.money += moneyReward;
+           pushLog(`¡Has ganado $${moneyReward.toLocaleString()}!`, "normal");
+
            nextState.totalBattlesWon += 1;
            nextState.zoneBattlesWon += 1;
 
@@ -744,14 +788,38 @@ export function useEngineTick() {
            );
            
            let currentActive = updatedTeam.find(p => p.uid === bState.playerPokemon.uid);
+           let pendingLearnMove: import("../types/game.types").ActiveMove | null = null;
+           let pendingEvoData: import("../types/game.types").EvolutionData | null = null;
+
            if (currentActive) {
              currentActive.xp += xpGain;
              pushLog(`¡${currentActive.name} ganó ${xpGain} PV!`, "level");
-             
+
              while (currentActive.xp >= xpToNextLevel(currentActive.level)) {
-                const leveled = levelUpPokemon(currentActive);
-                pushLog(`¡${currentActive.name} subió al nivel ${leveled.level}!`, "level");
-                currentActive = leveled;
+               const prevLevel = currentActive.level;
+               const leveled = levelUpPokemon(currentActive);
+               pushLog(`¡${leveled.name} subió al nivel ${leveled.level}!`, "level");
+               currentActive = leveled;
+
+               // Queue move learning (async — handled after setRun via side effect)
+               // We store the level for post-battle async check
+               if (!nextState.pendingMoveLearn) {
+                 // Mark that we need to check for new moves at this level
+                 // The actual async fetch happens in a useEffect outside the reducer
+                 (nextState as any).__checkMoveLearnAt = {
+                   pokemonUid: currentActive.uid,
+                   level: currentActive.level,
+                 };
+               }
+
+               // Queue evolution check — also async, mark for post-battle check
+               if (!pendingEvoData) {
+                 (nextState as any).__checkEvolutionAt = {
+                   pokemonUid: currentActive.uid,
+                   level: currentActive.level,
+                   pokemonId: currentActive.pokemonId,
+                 };
+               }
              }
            }
 
@@ -1231,6 +1299,122 @@ export function useEngineTick() {
       return nextState;
     });
   };
+
+  // ─── Async: Move Learn on Level Up ──────────────────────────────────────
+  useEffect(() => {
+    const marker = (run as any).__checkMoveLearnAt;
+    if (!marker || run.pendingMoveLearn) return;
+    const { pokemonUid, level } = marker;
+    const pokemon = run.team.find(p => p.uid === pokemonUid);
+    if (!pokemon) return;
+
+    // Clear marker immediately to avoid re-triggering
+    setRun(prev => {
+      const next = { ...prev };
+      delete (next as any).__checkMoveLearnAt;
+      return next;
+    });
+
+    learnMovesOnLevelUp(pokemon, level).then(newMove => {
+      if (!newMove) return;
+      setRun(prev => {
+        // Already has a pending learn — don't overwrite
+        if (prev.pendingMoveLearn) return prev;
+        const p = prev.team.find(t => t.uid === pokemonUid);
+        if (!p) return prev;
+        // If has room, add directly
+        if (p.moves.length < 4) {
+          return {
+            ...prev,
+            team: prev.team.map(t => t.uid === pokemonUid
+              ? { ...t, moves: [...t.moves, newMove] }
+              : t
+            ),
+            battleLog: [...prev.battleLog, {
+              id: Date.now().toString(),
+              text: `¡${p.name} aprendió ${newMove.moveName}!`,
+              type: "level" as const,
+            }].slice(-40),
+          };
+        }
+        // Full moveset — open modal
+        return {
+          ...prev,
+          pendingMoveLearn: {
+            pokemonUid,
+            pokemonName: p.name,
+            newMove,
+          },
+        };
+      });
+    });
+  }, [(run as any).__checkMoveLearnAt]);
+
+  // ─── Async: Evolution Check on Level Up ─────────────────────────────────
+  useEffect(() => {
+    const marker = (run as any).__checkEvolutionAt;
+    if (!marker || run.pendingEvolution) return;
+    const { pokemonUid, level, pokemonId } = marker;
+
+    setRun(prev => {
+      const next = { ...prev };
+      delete (next as any).__checkEvolutionAt;
+      return next;
+    });
+
+    const checkEvolution = async () => {
+      try {
+        const species = await getPokemonSpecies(pokemonId);
+        const chain = await getEvolutionChain(species.evolution_chain.url);
+
+        // Find this pokemon in the chain
+        const findInChain = (node: any): any => {
+          if (node.species.name === species.name) return node;
+          for (const next of node.evolves_to) {
+            const found = findInChain(next);
+            if (found) return found;
+          }
+          return null;
+        };
+
+        const node = findInChain(chain.chain);
+        if (!node || node.evolves_to.length === 0) return;
+
+        for (const evo of node.evolves_to) {
+          const detail = evo.evolution_details.find((d: any) =>
+            d.trigger.name === "level-up" && d.min_level && d.min_level <= level
+          );
+          if (!detail) continue;
+
+          // Found a valid level-up evolution
+          const evoSpeciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${evo.species.name}`).then(r => r.json());
+          const evoPokeRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${evo.species.name}`).then(r => r.json());
+
+          const fromPokemon = run.team.find(p => p.uid === pokemonUid);
+          if (!fromPokemon) return;
+
+          setRun(prev => {
+            if (prev.pendingEvolution) return prev;
+            return {
+              ...prev,
+              pendingEvolution: {
+                pokemonUid,
+                fromName: fromPokemon.name,
+                toName: evoPokeRes.name.charAt(0).toUpperCase() + evoPokeRes.name.slice(1),
+                toId: evoPokeRes.id,
+                reason: `nivel ${level}`,
+              },
+            };
+          });
+          break;
+        }
+      } catch (e) {
+        console.error("Evolution check failed", e);
+      }
+    };
+
+    checkEvolution();
+  }, [(run as any).__checkEvolutionAt]);
 
   useGameLoop(run.isActive, run.speedMultiplier, tick);
 }

@@ -52,7 +52,8 @@ export async function useItemOnPokemon(
     (itemDef.category !== "heal" &&
       itemDef.category !== "evo" &&
       itemDef.category !== "special" &&
-      itemDef.category !== "battle")
+      itemDef.category !== "battle" &&
+      itemDef.category !== "tm")
   ) {
     return {
       resultLog: `No puedes usar ${itemDef?.name || "este objeto"} así.`,
@@ -307,6 +308,77 @@ export async function useItemOnPokemon(
       console.error(e);
       return {
         resultLog: "Error al procesar la evolución.",
+        success: false,
+        newPokemon: pokemon,
+        newInventory: inventory,
+      };
+    }
+  }
+
+  // ─── TM: Teach move ──────────────────────────────────────────────────────
+  if (itemDef.category === "tm" && itemDef.effect.type === "teach") {
+    const effect = itemDef.effect as { type: "teach"; moveId: number; moveName: string };
+    const { moveId, moveName } = effect;
+
+    if (nextPokemon.moves.some((m) => m.moveId === moveId)) {
+      return {
+        resultLog: `${nextPokemon.name} ya conoce ${moveName}.`,
+        success: false,
+        newPokemon: pokemon,
+        newInventory: inventory,
+      };
+    }
+
+    try {
+      const md = await fetch(`https://pokeapi.co/api/v2/move/${moveId}`).then(r => r.json());
+      const spanName = md.names?.find((n: any) => n.language.name === "es")?.name ?? moveName;
+
+      const ailmentMap: Record<string, import("../features/run/types/game.types").StatusCondition> = {
+        paralysis: "PAR", burn: "BRN", poison: "PSN", toxic: "TOX", sleep: "SLP", freeze: "FRZ",
+      };
+      let statusEffect = undefined;
+      if (md.meta?.ailment?.name && md.meta.ailment.name !== "none") {
+        const cond = ailmentMap[md.meta.ailment.name];
+        if (cond) statusEffect = { condition: cond, chance: md.meta.ailment_chance || 100 };
+      }
+
+      const newMove: import("../features/run/types/game.types").ActiveMove = {
+        moveId: md.id,
+        moveName: spanName,
+        type: md.type.name,
+        category: md.damage_class.name,
+        power: md.power || 0,
+        accuracy: md.accuracy || 100,
+        currentPP: md.pp || 10,
+        maxPP: md.pp || 10,
+        priority: md.priority || 0,
+        enabled: true,
+        statusEffect,
+      };
+
+      const nextInv = { ...inventory, [itemId]: (inventory[itemId] || 0) - 1 };
+
+      if (nextPokemon.moves.length < 4) {
+        nextPokemon.moves = [...nextPokemon.moves, newMove];
+        return {
+          resultLog: `¡${nextPokemon.name} aprendió ${spanName}!`,
+          success: true,
+          newPokemon: nextPokemon,
+          newInventory: nextInv,
+        };
+      } else {
+        // Full moveset — signal caller to open MoveLearningModal
+        return {
+          resultLog: `__PENDING_MOVE_LEARN__`,
+          success: true,
+          newPokemon: nextPokemon,
+          newInventory: nextInv,
+          pendingMove: newMove,
+        } as any;
+      }
+    } catch {
+      return {
+        resultLog: "Error al cargar el movimiento de la MT.",
         success: false,
         newPokemon: pokemon,
         newInventory: inventory,
