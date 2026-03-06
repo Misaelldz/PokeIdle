@@ -42,6 +42,12 @@ import {
 } from "../../../engine/boss.engine";
 import { calculateMoneyGain } from "../../../engine/economy.engine";
 import { handleStanceChange } from "../../../engine/abilities.engine";
+import {
+  applyMegaEvolution,
+  revertMegaEvolution,
+  resetMegaStateAfterBattle,
+} from "../../../engine/mega.engine";
+import { canMegaEvolveSync } from "../../../lib/mega.service";
 
 export function useEngineTick() {
   const { run, setRun, setMeta, notify } = useGame();
@@ -321,6 +327,52 @@ export function useEngineTick() {
       }
     }
 
+    // --- AUTO-MEGA EXECUTION ---
+    if (
+      !run.isManualBattle &&
+      run.megaState?.pendingAutoMega &&
+      run.currentBattle &&
+      !run.megaState.isMega
+    ) {
+      const mega = run.megaState.pendingAutoMega;
+      fetchingRef.current = true;
+      try {
+        const { updatedPokemon, megaState, logMessage } =
+          await applyMegaEvolution(
+            run.currentBattle.playerPokemon,
+            mega,
+            run.megaState,
+          );
+        setRun((prev) => {
+          if (!prev.currentBattle) return prev;
+          return {
+            ...prev,
+            megaState: { ...megaState, pendingAutoMega: undefined },
+            currentBattle: {
+              ...prev.currentBattle,
+              playerPokemon: updatedPokemon,
+            },
+            team: prev.team.map((p) =>
+              p.uid === updatedPokemon.uid ? updatedPokemon : p,
+            ),
+            battleLog: [
+              ...prev.battleLog,
+              { id: generateUid(), text: logMessage, type: "mega" as any },
+            ].slice(-40),
+          };
+        });
+      } catch (e) {
+        console.error("[AutoMega] Failed:", e);
+        setRun((prev) => ({
+          ...prev,
+          megaState: { ...prev.megaState, pendingAutoMega: undefined },
+        }));
+      } finally {
+        fetchingRef.current = false;
+      }
+      return;
+    }
+
     // --- ACTIVE BATTLE ---
     // We do functional state update to ensure latest state
     setRun((state) => {
@@ -432,6 +484,26 @@ export function useEngineTick() {
           );
           nextState.team = res.newTeam;
           nextState.pc = res.newPC;
+
+          // Revertar mega si estaba activa
+          if (
+            nextState.megaState?.isMega &&
+            nextState.currentBattle?.playerPokemon
+          ) {
+            const reverted = revertMegaEvolution(
+              nextState.currentBattle.playerPokemon,
+              nextState.megaState,
+            );
+            nextState.team = nextState.team.map((p) =>
+              p.uid === reverted.uid ? reverted : p,
+            );
+            nextState.currentBattle = {
+              ...nextState.currentBattle,
+              playerPokemon: reverted,
+            };
+          }
+          nextState.megaState = resetMegaStateAfterBattle();
+
           nextState.currentBattle = null;
           nextState.pendingLootSelection = generateLootOptions([], {
             team: nextState.team,
@@ -572,6 +644,26 @@ export function useEngineTick() {
 
           bState.pendingCaptureAnim = null;
           processedAnimRef.current = null;
+
+          // Revertar mega si estaba activa
+          if (
+            nextState.megaState?.isMega &&
+            nextState.currentBattle?.playerPokemon
+          ) {
+            const reverted = revertMegaEvolution(
+              nextState.currentBattle.playerPokemon,
+              nextState.megaState,
+            );
+            nextState.team = nextState.team.map((p) =>
+              p.uid === reverted.uid ? reverted : p,
+            );
+            nextState.currentBattle = {
+              ...nextState.currentBattle,
+              playerPokemon: reverted,
+            };
+          }
+          nextState.megaState = resetMegaStateAfterBattle();
+
           nextState.currentBattle = null;
           return nextState;
         } else {
@@ -588,6 +680,28 @@ export function useEngineTick() {
       // For animation state machine:
       // If idle, we determine if a move has been selected.
       if (!bState.turnState || bState.turnState === "idle") {
+        // AUTO-MEGA (solo idle, solo si no es manual, solo turno 0 de la batalla)
+        if (
+          !nextState.isManualBattle &&
+          nextState.hasMegaBracelet &&
+          !nextState.megaState.usedThisBattle &&
+          bState.turnCount === 0
+        ) {
+          const availableMegas = canMegaEvolveSync(
+            bState.playerPokemon.pokemonId,
+            nextState.items,
+            nextState.hasMegaBracelet,
+            nextState.megaState.usedThisBattle,
+          );
+
+          if (availableMegas.length > 0) {
+            nextState.megaState = {
+              ...nextState.megaState,
+              pendingAutoMega: availableMegas[0],
+            };
+          }
+        }
+
         // Manual Battle Handling
         let pMove: ActiveMove | null | undefined;
         let usedManualTurn = false;
@@ -1098,6 +1212,26 @@ export function useEngineTick() {
 
           // End Battle
           processedAnimRef.current = null;
+
+          // Revertar mega si estaba activa
+          if (
+            nextState.megaState?.isMega &&
+            nextState.currentBattle?.playerPokemon
+          ) {
+            const reverted = revertMegaEvolution(
+              nextState.currentBattle.playerPokemon,
+              nextState.megaState,
+            );
+            nextState.team = nextState.team.map((p) =>
+              p.uid === reverted.uid ? reverted : p,
+            );
+            nextState.currentBattle = {
+              ...nextState.currentBattle,
+              playerPokemon: reverted,
+            };
+          }
+          nextState.megaState = resetMegaStateAfterBattle();
+
           nextState.currentBattle = null;
           nextState.battleLog = logs.slice(-40);
           return nextState;

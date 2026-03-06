@@ -1,3 +1,5 @@
+import { type MegaEvolution } from "../../../lib/mega.service";
+
 export type RegionId =
   | "kanto"
   | "johto"
@@ -184,6 +186,7 @@ export interface ActiveMegaState {
   originalBaseStats: PokemonStats | null;
   originalStats: PokemonStats | null;
   usedThisBattle: boolean;
+  pendingAutoMega?: MegaEvolution;
 }
 
 export const defaultActiveMegaState: ActiveMegaState = {
@@ -195,6 +198,7 @@ export const defaultActiveMegaState: ActiveMegaState = {
   originalBaseStats: null,
   originalStats: null,
   usedThisBattle: false,
+  pendingAutoMega: undefined,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
