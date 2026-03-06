@@ -7,7 +7,7 @@
 
 export type EvolutionTier = 1 | 2 | 3;
 
-import { isSpecialPokemon, canAppearInWild } from "../../../lib/legendaries";
+import { isSpecialPokemon, canAppearInWild } from "../lib/legendaries";
 
 // Tier 1: Base forms / First stage
 const TIER_1_POOL = [
