@@ -266,7 +266,7 @@ export function GlobalStatsView({ onBack }: Props) {
                   <div
                     className="h-full bg-brand"
                     style={{
-                      width: `${(uniqueCapturedCount / totalPokemonPossible) * 100}%`,
+                      width: `${Math.min(100, (uniqueCapturedCount / totalPokemonPossible) * 100)}%`,
                     }}
                   ></div>
                 </div>
@@ -287,7 +287,7 @@ export function GlobalStatsView({ onBack }: Props) {
                   <div
                     className="h-full bg-accent"
                     style={{
-                      width: `${(meta.unlockedStarters.length / totalStartersPossible) * 100}%`,
+                      width: `${Math.min(100, (meta.unlockedStarters.length / totalStartersPossible) * 100)}%`,
                     }}
                   ></div>
                 </div>
@@ -306,7 +306,7 @@ export function GlobalStatsView({ onBack }: Props) {
                   <div
                     className="h-full bg-success"
                     style={{
-                      width: `${(meta.unlockedRegions.length / 8) * 100}%`,
+                      width: `${Math.min(100, (meta.unlockedRegions.length / 8) * 100)}%`,
                     }}
                   ></div>
                 </div>
