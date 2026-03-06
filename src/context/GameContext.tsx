@@ -203,6 +203,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
     remove: removeNotification,
   } = useNotifications();
 
+  // Cache warming: pre-fetch sprites for team and training pokemon
+  useEffect(() => {
+    if (user || isGuest) {
+      const idsToCache = new Set<number>();
+      run.team.forEach(p => idsToCache.add(p.pokemonId));
+      if (training.pokemon?.pokemonId) idsToCache.add(training.pokemon.pokemonId);
+
+      // Pre-fetch images
+      idsToCache.forEach(id => {
+        const img = new Image();
+        img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+        const imgBack = new Image();
+        imgBack.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`;
+      });
+    }
+  }, [user, isGuest, run.team, training.pokemon]);
+
   // Load from Supabase on Login
   useEffect(() => {
     if (user) {
