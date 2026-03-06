@@ -1285,18 +1285,23 @@ export function useEngineTick() {
         // If has room, add directly
         if (p.moves.length < 4) {
           const nextMoves = [...p.moves, newMove];
+          const updatedTeam = prev.team.map(t => t.uid === pokemonUid
+            ? { ...t, moves: nextMoves }
+            : t
+          );
+
+          let nextBattle = prev.currentBattle;
+          if (nextBattle && nextBattle.playerPokemon.uid === pokemonUid) {
+            nextBattle = {
+              ...nextBattle,
+              playerPokemon: { ...nextBattle.playerPokemon, moves: nextMoves }
+            };
+          }
+
           return {
             ...prev,
-            team: prev.team.map(t => t.uid === pokemonUid
-              ? { ...t, moves: nextMoves }
-              : t
-            ),
-            currentBattle: prev.currentBattle?.playerPokemon?.uid === pokemonUid
-              ? {
-                  ...prev.currentBattle,
-                  playerPokemon: { ...prev.currentBattle.playerPokemon, moves: nextMoves }
-                }
-              : prev.currentBattle,
+            team: updatedTeam,
+            currentBattle: nextBattle,
             battleLog: [...prev.battleLog, {
               id: Date.now().toString(),
               text: `¡${p.name} aprendió ${newMove.moveName}!`,
