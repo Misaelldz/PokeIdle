@@ -1,5 +1,6 @@
 import React from "react";
 import { useGame } from "../../../context/GameContext";
+import { useAuth } from "../../../context/AuthContext";
 import { PixelSprite } from "../../../components/ui/PixelSprite";
 import {
   Trophy,
@@ -22,6 +23,10 @@ interface Props {
 }
 
 export function GlobalStatsView({ onBack }: Props) {
+
+  const { user: authUser, isGuest } = useAuth();
+  const displayName = isGuest ? "Invitado" : (authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || authUser?.email || "Entrenador");
+
   const { meta } = useGame();
 
   // Calculations from history
@@ -85,6 +90,11 @@ export function GlobalStatsView({ onBack }: Props) {
           <h2 className="text-section text-accent">
             <History size={18} /> Historial Global
           </h2>
+          <div className="inline-flex items-center gap-2 mb-4 bg-surface-dark border-2 border-brand/20 p-2 px-4 shadow-pixel">
+            <User size={14} className="text-brand" />
+            <span className="text-label text-subtitle">Entrenador:</span>
+            <span className="text-brand font-bold uppercase tracking-widest">{displayName}</span>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               label="Runs Completadas"
