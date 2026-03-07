@@ -79,7 +79,7 @@ export function EvolutionModal() {
         moves: p.moves,
       };
 
-      return {
+      const next = {
         ...prev,
         pendingEvolution: null,
         team: prev.team.map((t) =>
@@ -98,6 +98,16 @@ export function EvolutionModal() {
           },
         ].slice(-40),
       };
+
+      // Trigger move learning check for the newly evolved pokemon at its current level
+      const learnQueue = (next as any).__checkMoveLearnQueue || [];
+      learnQueue.push({
+        pokemonUid: pending.pokemonUid,
+        level: evolvedPokemon.level,
+      });
+      (next as any).__checkMoveLearnQueue = learnQueue;
+
+      return next;
     });
   };
 

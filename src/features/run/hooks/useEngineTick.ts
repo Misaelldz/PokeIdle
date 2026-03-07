@@ -1466,19 +1466,23 @@ export function useEngineTick() {
               if (!nextState.pendingMoveLearn) {
                 // Mark that we need to check for new moves at this level
                 // The actual async fetch happens in a useEffect outside the reducer
-                (nextState as any).__checkMoveLearnAt = {
+                const learnQueue = (nextState as any).__checkMoveLearnQueue || [];
+                learnQueue.push({
                   pokemonUid: currentActive.uid,
                   level: currentActive.level,
-                };
+                });
+                (nextState as any).__checkMoveLearnQueue = learnQueue;
               }
 
               // Queue evolution check — also async, mark for post-battle check
               if (!pendingEvoData) {
-                (nextState as any).__checkEvolutionAt = {
+                const evoQueue = (nextState as any).__checkEvolutionQueue || [];
+                evoQueue.push({
                   pokemonUid: currentActive.uid,
                   level: currentActive.level,
                   pokemonId: currentActive.pokemonId,
-                };
+                });
+                (nextState as any).__checkEvolutionQueue = evoQueue;
               }
             }
           }
@@ -1783,26 +1787,39 @@ export function useEngineTick() {
 
   // ─── Async: Move Learn on Level Up ──────────────────────────────────────
   useEffect(() => {
-    const marker = (run as any).__checkMoveLearnAt;
-    if (!marker || run.pendingMoveLearn) return;
+    const queue = (run as any).__checkMoveLearnQueue as {
+      pokemonUid: string;
+      level: number;
+    }[];
+    if (!queue || queue.length === 0) return;
+
+    // Tomar el primer elemento de la cola
+    const [marker, ...rest] = queue;
+
+    // Limpiar el que estamos procesando
+    setRun((prev) => {
+      const next = { ...prev };
+      if (rest.length === 0) {
+        delete (next as any).__checkMoveLearnQueue;
+      } else {
+        (next as any).__checkMoveLearnQueue = rest;
+      }
+      return next;
+    });
+
     const { pokemonUid, level } = marker;
     const pokemon = run.team.find((p) => p.uid === pokemonUid);
     if (!pokemon) return;
 
-    // Clear marker immediately to avoid re-triggering
-    setRun((prev) => {
-      const next = { ...prev };
-      delete (next as any).__checkMoveLearnAt;
-      return next;
-    });
-
     learnMovesOnLevelUp(pokemon, level).then((newMove) => {
       if (!newMove) return;
       setRun((prev) => {
-        // Already has a pending learn — don't overwrite
+        // Already has a pending learn — don't overwrite, but keep newMove in mind?
+        // Actually, the modal blocks the tick, so we only process one at a time.
         if (prev.pendingMoveLearn) return prev;
         const p = prev.team.find((t) => t.uid === pokemonUid);
         if (!p) return prev;
+
         // If has room, add directly
         if (p.moves.length < 4) {
           const nextMoves = [...p.moves, newMove];
@@ -1843,22 +1860,34 @@ export function useEngineTick() {
         };
       });
     });
-  }, [(run as any).__checkMoveLearnAt]);
+  }, [(run as any).__checkMoveLearnQueue]);
 
   // ─── Async: Evolution Check on Level Up ─────────────────────────────────
   useEffect(() => {
-    const marker = (run as any).__checkEvolutionAt;
-    if (!marker) return;
+    const queue = (run as any).__checkEvolutionQueue as {
+      pokemonUid: string;
+      level: number;
+      pokemonId: number;
+      toId?: number;
+      toName?: string;
+      reason?: string;
+    }[];
+    if (!queue || queue.length === 0) return;
 
-    // If already showing evolution modal, clear marker but don't check again
-    if (run.pendingEvolution) {
-      setRun((prev) => {
-        const next = { ...prev };
-        delete (next as any).__checkEvolutionAt;
-        return next;
-      });
-      return;
-    }
+    // If already showing evolution modal, don't pop yet
+    if (run.pendingEvolution) return;
+
+    const [marker, ...rest] = queue;
+
+    setRun((prev) => {
+      const next = { ...prev };
+      if (rest.length === 0) {
+        delete (next as any).__checkEvolutionQueue;
+      } else {
+        (next as any).__checkEvolutionQueue = rest;
+      }
+      return next;
+    });
 
     const { pokemonUid, level, pokemonId, toId, toName } = marker;
     console.log(
@@ -1982,7 +2011,7 @@ export function useEngineTick() {
     };
 
     checkEvolution();
-  }, [(run as any).__checkEvolutionAt]);
+  }, [(run as any).__checkEvolutionQueue]);
 
   useEffect(() => {
     const marker = (run as any).__spawnNextGymPokemon;

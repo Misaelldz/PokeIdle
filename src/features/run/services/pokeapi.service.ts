@@ -452,7 +452,7 @@ export async function learnMovesOnLevelUp(
         .eq("move_id", match.moveId)
         .maybeSingle();
 
-      if (!md || !md.power || md.power === 0) return null;
+      if (!md) return null;
 
       return {
         moveId: md.move_id,
@@ -488,9 +488,6 @@ export async function learnMovesOnLevelUp(
     // Only take the first new move to avoid too many API calls
     const candidate = newMoveCandidates[0];
     const md = await fetchJson(candidate.move.url);
-
-    // Skip status or 0-power moves (focus on damaging moves)
-    if (!md.power || md.power === 0) return null;
 
     // Check if we already have this move
     if (pokemon.moves.some((m) => m.moveId === md.id)) return null;

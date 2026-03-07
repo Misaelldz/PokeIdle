@@ -11,7 +11,6 @@ import {
 } from "../../run/services/pokeapi.service";
 import { getZonesForRegion } from "../../../lib/regions.service";
 import type { Zone } from "../../../lib/regions";
-import { PokemonInjectionModal } from "./PokemonInjectionModal";
 import { loadMegaEvolutions } from "../../../lib/mega.service";
 import { resetMegaStateAfterBattle } from "../../../engine/mega.engine";
 import { clsx } from "clsx";
@@ -186,7 +185,6 @@ export function DebuggerPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("general");
-  const [isPokeModalOpen, setIsPokeModalOpen] = useState(false);
   const [itemSearch, setItemSearch] = useState("");
   const [stateSearch, setStateSearch] = useState("");
   const [jsonExpanded, setJsonExpanded] = useState(false);
@@ -589,7 +587,7 @@ export function DebuggerPanel() {
 
                     <SectionLabel>Inyector Pokémon</SectionLabel>
                     <DbgButton
-                      onClick={() => setIsPokeModalOpen(true)}
+                      onClick={() => (window as any).openPokeInjection?.()}
                       variant="accent"
                       className="w-full py-2"
                     >
@@ -1178,12 +1176,5 @@ export function DebuggerPanel() {
     </>
   );
 
-  return (
-    <>
-      {createPortal(content, document.body)}
-      {isPokeModalOpen && (
-        <PokemonInjectionModal onClose={() => setIsPokeModalOpen(false)} />
-      )}
-    </>
-  );
+  return createPortal(content, document.body);
 }

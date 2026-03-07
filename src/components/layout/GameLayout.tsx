@@ -30,6 +30,7 @@ import { EvolutionModal } from "../../features/run/components/EvolutionModal";
 import { MegaEvolutionModal } from "../../features/run/components/MegaEvolutionModal";
 import { useAuth } from "../../context/AuthContext";
 import { DebuggerPanel } from "../../features/debug/components/DebuggerPanel";
+import { PokemonInjectionModal } from "../../features/debug/components/PokemonInjectionModal";
 
 export function GameLayout({ zones }: { zones: Zone[] }) {
   const { isAdmin } = useAuth();
@@ -54,13 +55,16 @@ export function GameLayout({ zones }: { zones: Zone[] }) {
     | "stats"
   >("main");
   const [isBagOpen, setIsBagOpen] = React.useState(false);
+  const [isPokeInjectionOpen, setIsPokeInjectionOpen] = React.useState(false);
   const [showTutorial, setShowTutorial] = React.useState(false);
 
   // Expose bag control to window for other components (like TeamRoster)
   React.useEffect(() => {
     (window as any).openBag = () => setIsBagOpen(true);
+    (window as any).openPokeInjection = () => setIsPokeInjectionOpen(true);
     return () => {
       delete (window as any).openBag;
+      delete (window as any).openPokeInjection;
     };
   }, []);
 
@@ -91,6 +95,9 @@ export function GameLayout({ zones }: { zones: Zone[] }) {
   const globalElements = (
     <>
       {isBagOpen && <BagModal onClose={() => setIsBagOpen(false)} />}
+      {isPokeInjectionOpen && (
+        <PokemonInjectionModal onClose={() => setIsPokeInjectionOpen(false)} />
+      )}
       <ZoneTransitionModal />
       {showTutorial && <GameTutorialModal onClose={handleCloseTutorial} />}
       {isAdmin && <DebuggerPanel />}
