@@ -259,6 +259,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Load from Supabase on Login
   useEffect(() => {
     if (user) {
+      // Si ya hay una run activa en memoria, no sobreescribir con la nube
+      if (run.isActive) {
+        setIsCloudSyncing(false);
+        return;
+      }
       setIsCloudSyncing(true);
       const loadFromCloud = async () => {
         try {
@@ -344,13 +349,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isGuest]);
 
-  // Sync on unmount or unload
+  // Sync on tab hide, unmount, or unload
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      saveGame();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        saveGame();
+      }
     };
+    const handleBeforeUnload = () => saveGame();
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, [saveGame]);
 
   return (
