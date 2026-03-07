@@ -886,6 +886,50 @@ export function DebuggerPanel() {
                     </div>
 
                     <SectionLabel>Alto Mando</SectionLabel>
+                    <div className="bg-black/40 border border-border p-2 flex flex-col gap-0.5 mb-1">
+                      <StatRow
+                        label="eliteFourProgress"
+                        value={`${run.eliteFourProgress ?? 0} / 4`}
+                      />
+                      <StatRow
+                        label="eliteFourDefeated"
+                        value={run.eliteFourDefeated ? "✅ SÍ" : "❌ NO"}
+                      />
+                    </div>
+                    <div className="grid grid-cols-5 gap-1 mb-1">
+                      {[
+                        { idx: 0, name: "Lorelei" },
+                        { idx: 1, name: "Bruno" },
+                        { idx: 2, name: "Agatha" },
+                        { idx: 3, name: "Lance" },
+                        { idx: 4, name: "Blue" },
+                      ].map(({ idx, name }) => (
+                        <DbgButton
+                          key={idx}
+                          onClick={() =>
+                            setRun((p) => ({
+                              ...p,
+                              eliteFourProgress: idx,
+                              eliteFourDefeated: false,
+                              currentZoneIndex: 18, // más allá de la última zona Kanto
+                              zoneBattlesWon: 99,
+                              gymsBadges: [1, 2, 3, 4, 5, 6, 7, 8],
+                              currentBattle: null,
+                              pendingZoneTransition: false,
+                            }))
+                          }
+                          variant={
+                            (run.eliteFourProgress ?? 0) === idx && !run.eliteFourDefeated
+                              ? "accent"
+                              : "default"
+                          }
+                          className="text-center flex flex-col items-center gap-0.5 py-1.5"
+                        >
+                          <span>{idx}</span>
+                          <span className="text-[0.4rem] opacity-70">{name}</span>
+                        </DbgButton>
+                      ))}
+                    </div>
                     <div className="grid grid-cols-2 gap-1.5">
                       <DbgButton
                         onClick={() => setRunField({ eliteFourDefeated: true })}
@@ -896,7 +940,7 @@ export function DebuggerPanel() {
                       </DbgButton>
                       <DbgButton
                         onClick={() =>
-                          setRunField({ eliteFourDefeated: false })
+                          setRunField({ eliteFourDefeated: false, eliteFourProgress: 0 })
                         }
                         variant="danger"
                         disabled={!run.eliteFourDefeated}
@@ -1119,11 +1163,15 @@ export function DebuggerPanel() {
         </div>
       )}
 
+    </>
+  );
+
+  return (
+    <>
+      {createPortal(content, document.body)}
       {isPokeModalOpen && (
         <PokemonInjectionModal onClose={() => setIsPokeModalOpen(false)} />
       )}
     </>
   );
-
-  return createPortal(content, document.body);
 }
