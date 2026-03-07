@@ -645,6 +645,7 @@ export function useEngineTick() {
               const region = { zones: regionZones };
               if (nextState.currentZoneIndex + 1 < region.zones.length) {
                 nextState.currentZoneIndex += 1;
+                nextState.maxZoneIndex = Math.max(nextState.maxZoneIndex, nextState.currentZoneIndex);
                 nextState.zoneBattlesWon = 0;
                 nextState.pendingZoneTransition = true;
               }
@@ -1413,6 +1414,7 @@ export function useEngineTick() {
               const region = { zones: regionZones };
               if (nextState.currentZoneIndex + 1 < region.zones.length) {
                 nextState.currentZoneIndex += 1;
+                nextState.maxZoneIndex = Math.max(nextState.maxZoneIndex, nextState.currentZoneIndex);
                 nextState.zoneBattlesWon = 0;
                 nextState.pendingZoneTransition = true;
               }

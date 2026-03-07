@@ -10,7 +10,7 @@ interface RegionMapProps {
 }
 
 export function RegionMap({ zones }: RegionMapProps) {
-  const { run } = useGame();
+  const { run, setRun } = useGame();
 
   if (!run.isActive) return null;
 
@@ -29,17 +29,30 @@ export function RegionMap({ zones }: RegionMapProps) {
         <div className="relative group">
           <select
             value={run.currentZoneIndex}
-            disabled
-            className="w-full bg-surface-alt border-2 border-border p-3 font-display text-[0.65rem] text-foreground appearance-none cursor-default opacity-100"
+            onChange={(e) => {
+              const newIndex = parseInt(e.target.value);
+              setRun((prev: any) => ({
+                ...prev,
+                currentZoneIndex: newIndex,
+                currentZoneProgress: 0,
+                zoneBattlesWon: 0,
+                currentBattle: null, // Clear current battle if switching zones
+              }));
+            }}
+            className="w-full bg-surface-alt border-2 border-border p-3 font-display text-[0.65rem] text-foreground appearance-none cursor-pointer hover:border-brand transition-colors focus:outline-none opacity-100"
           >
             {region.zones.map((zone, index) => (
-              <option key={zone.id} value={index}>
+              <option 
+                key={zone.id} 
+                value={index}
+                disabled={index > run.maxZoneIndex}
+              >
                 {index < run.currentZoneIndex ? "✅ " : index === run.currentZoneIndex ? "📍 " : "🔒 "}
                 {zone.name} {zone.isGym ? "(GYM)" : ""}
               </option>
             ))}
           </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted group-hover:text-brand transition-colors">
             <ChevronDown size={14} />
           </div>
         </div>

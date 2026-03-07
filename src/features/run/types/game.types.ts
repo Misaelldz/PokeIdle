@@ -231,6 +231,7 @@ export interface RunState {
   gymsBadges: number[];
   eliteFourDefeated: boolean;
   eliteFourProgress: number; // 0=Lorelei, 1=Bruno, 2=Agatha, 3=Lance, 4=Campeón
+  maxZoneIndex: number;
 
   items: Record<string, number>;
   expMultiplier: number; // Cumulative from "Cartas"

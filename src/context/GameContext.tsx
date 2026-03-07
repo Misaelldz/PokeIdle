@@ -77,6 +77,7 @@ export const defaultRun: RunState = {
   pendingZoneTransition: false,
   pinnedItems: [],
   inheritanceProgress: {},
+  maxZoneIndex: 0,
 };
 
 const defaultTrainingState: TrainingState = {
@@ -200,12 +201,23 @@ function runMigrationsMeta(loaded: any) {
   };
 }
 
+function runMigrationsRun(loaded: any) {
+  const baseRun = { ...defaultRun };
+  if (!loaded) return baseRun;
+
+  return {
+    ...baseRun,
+    ...loaded,
+    maxZoneIndex: loaded.maxZoneIndex ?? loaded.currentZoneIndex ?? 0,
+  };
+}
+
 export function GameProvider({ children }: { children: ReactNode }) {
   const { user, isGuest } = useAuth();
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
 
   const [run, setRun] = useState<RunState>(() =>
-    loadFromStorage("pokeidle_run", defaultRun),
+    runMigrationsRun(loadFromStorage("pokeidle_run", defaultRun)),
   );
   const [training, setTraining] = useState<TrainingState>(() => {
     const loaded = loadFromStorage("pokeidle_training", defaultTrainingState);
