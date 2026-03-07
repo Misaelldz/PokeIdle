@@ -175,6 +175,15 @@ export interface EvolutionData {
   reason: string; // e.g. "nivel 16" or "Piedra Fuego"
 }
 
+export interface PendingMegaEvolution {
+  pokemonUid: string;
+  fromName: string;
+  toName: string;
+  fromId: number;
+  toId: number;
+  megaName: string;
+}
+
 // ─── Mega Evolution ──────────────────────────────────────────────────────────
 
 export interface ActiveMegaState {
@@ -249,6 +258,7 @@ export interface RunState {
   pendingLootSelection: string[] | null;
   pendingMoveLearn: MoveLearnData | null;
   pendingEvolution: EvolutionData | null;
+  pendingMegaEvolution: PendingMegaEvolution | null;
   pendingZoneTransition: boolean;
   pinnedItems: string[]; // slug
   inheritanceProgress: Record<number, InheritanceProgress>;

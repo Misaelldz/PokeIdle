@@ -359,6 +359,14 @@ export function useEngineTick() {
               ...prev.battleLog,
               { id: generateUid(), text: logMessage, type: "mega" as any },
             ].slice(-40),
+            pendingMegaEvolution: {
+              pokemonUid: updatedPokemon.uid,
+              fromId: prev.currentBattle.playerPokemon.pokemonId,
+              fromName: prev.currentBattle.playerPokemon.name,
+              toId: mega.mega_pokemon_id,
+              toName: mega.mega_name,
+              megaName: logMessage.split("¡")[1]?.split(" ha")[0] ?? mega.mega_name,
+            },
           };
         });
       } catch (e) {

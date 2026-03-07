@@ -112,6 +112,14 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
                 type: "evolution" as const,
               },
             ].slice(-40),
+            pendingMegaEvolution: {
+              pokemonUid: updatedPokemon.uid,
+              fromId: prev.currentBattle.playerPokemon.pokemonId,
+              fromName: prev.currentBattle.playerPokemon.name,
+              toId: mega.mega_pokemon_id,
+              toName: mega.mega_name,
+              megaName: logMessage.split("¡")[1]?.split(" ha")[0] ?? mega.mega_name,
+            },
           };
         });
       } catch (err) {
