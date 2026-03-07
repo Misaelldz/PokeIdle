@@ -3,7 +3,7 @@ import { useGame } from '../../../context/GameContext';
 import { REGIONS } from '../../../lib/regions';
 import type { Zone } from '../../../lib/regions';
 import { clsx } from 'clsx';
-import { Trophy, CircleDashed, CheckCircle2, ChevronRight, Medal } from 'lucide-react';
+import { Trophy, CircleDashed, CheckCircle2, ChevronRight, Medal, ChevronDown } from 'lucide-react';
 
 interface RegionMapProps {
   zones: Zone[];
@@ -25,40 +25,64 @@ export function RegionMap({ zones }: RegionMapProps) {
         REGIÓN {region.name}
       </h2>
 
-      <div className="flex flex-col relative before:absolute before:inset-y-2 before:left-[11px] before:w-0.5 before:bg-border before:-z-0">
-        
-        {region.zones.map((zone, index) => {
-          const isCompleted = index < run.currentZoneIndex;
-          const isCurrent = index === run.currentZoneIndex;
-          const isLocked = index > run.currentZoneIndex;
-          const isGym = zone.isGym;
+      <div className="flex flex-col gap-3">
+        <div className="relative group">
+          <select
+            value={run.currentZoneIndex}
+            disabled
+            className="w-full bg-surface-alt border-2 border-border p-3 font-display text-[0.65rem] text-foreground appearance-none cursor-default opacity-100"
+          >
+            {region.zones.map((zone, index) => (
+              <option key={zone.id} value={index}>
+                {index < run.currentZoneIndex ? "✅ " : index === run.currentZoneIndex ? "📍 " : "🔒 "}
+                {zone.name} {zone.isGym ? "(GYM)" : ""}
+              </option>
+            ))}
+          </select>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted">
+            <ChevronDown size={14} />
+          </div>
+        </div>
 
-          return (
-            <div key={zone.id} className="flex items-center gap-3 py-2 z-10">
-              <div className="bg-surface-alt rounded-full">
-                {isCompleted ? <CheckCircle2 size={24} className={clsx("fill-surface", isGym ? "text-accent" : "text-success")} /> :
-                 isCurrent   ? <ChevronRight size={24} className={clsx("bg-surface-alt animate-pulse", isGym ? "text-accent" : "text-brand")} /> :
-                               isGym ? <Medal size={24} className="text-muted/50 bg-surface-alt" /> : <CircleDashed size={24} className="text-muted bg-surface-alt" />}
-              </div>
-              <div className={clsx(
-                "flex flex-col font-display text-[0.55rem]", 
-                isLocked ? "text-muted" : (isGym ? "text-accent" : "text-foreground")
+        {/* Current Zone Detail & Progress */}
+        {region.zones[run.currentZoneIndex] && (
+          <div className={clsx(
+            "p-3 border-2 flex flex-col gap-2",
+            region.zones[run.currentZoneIndex].isGym 
+              ? "bg-accent/5 border-accent/30" 
+              : "bg-brand/5 border-brand/30"
+          )}>
+            <div className="flex justify-between items-center">
+              <span className={clsx(
+                "font-display text-[0.6rem] uppercase tracking-tighter",
+                region.zones[run.currentZoneIndex].isGym ? "text-accent" : "text-brand"
               )}>
-                <span className="flex items-center gap-1">
-                  {zone.name}
-                  {isGym && <span className="text-[0.5rem] p-0.5 bg-accent/20 border border-accent/30 text-accent rounded px-1">GYM</span>}
-                </span>
-                {isCurrent && <span className={clsx(
-                  "text-[0.45rem] mt-1 tracking-wider border px-1 py-0.5 self-start",
-                  isGym ? "bg-accent/10 border-accent/50 text-accent" : "bg-brand/10 border-brand/50 text-brand"
-                )}>EXPLORANDO {Math.floor(run.currentZoneProgress)}%</span>}
-              </div>
+                {region.zones[run.currentZoneIndex].name}
+              </span>
+              {region.zones[run.currentZoneIndex].isGym && (
+                <Medal size={14} className="text-accent shadow-accent/50" />
+              )}
             </div>
-          );
-        })}
+            
+            <div className="flex flex-col gap-1.5">
+              <div className="h-2 bg-black/40 border border-border/30 overflow-hidden">
+                <div 
+                  className={clsx(
+                    "h-full transition-all duration-500",
+                    region.zones[run.currentZoneIndex].isGym ? "bg-accent" : "bg-brand"
+                  )}
+                  style={{ width: `${Math.floor(run.currentZoneProgress)}%` }}
+                />
+              </div>
+              <span className="font-display text-[0.45rem] text-muted text-right tracking-widest uppercase">
+                Explorando: {Math.floor(run.currentZoneProgress)}%
+              </span>
+            </div>
+          </div>
+        )}
 
         {region.eliteFour && (
-          <div className="flex items-center gap-3 py-3 mt-2 pt-4 border-t-2 border-dashed border-border z-10 bg-surface-alt">
+          <div className="flex items-center gap-3 py-3 pt-4 border-t-2 border-dashed border-border z-10 bg-surface-alt">
             <div className="bg-surface-alt rounded-full border-2 border-accent p-1 shadow-[0_0_10px_rgba(255,215,0,0.2)]">
                <Trophy size={16} className="text-accent" />
             </div>
@@ -70,7 +94,6 @@ export function RegionMap({ zones }: RegionMapProps) {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

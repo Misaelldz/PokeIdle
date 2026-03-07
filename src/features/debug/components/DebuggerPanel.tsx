@@ -9,6 +9,8 @@ import {
   getPokemonSpecies,
   getEvolutionChain,
 } from "../../run/services/pokeapi.service";
+import { getZonesForRegion } from "../../../lib/regions.service";
+import type { Zone } from "../../../lib/regions";
 import { PokemonInjectionModal } from "./PokemonInjectionModal";
 import { loadMegaEvolutions } from "../../../lib/mega.service";
 import { resetMegaStateAfterBattle } from "../../../engine/mega.engine";
@@ -188,6 +190,14 @@ export function DebuggerPanel() {
   const [itemSearch, setItemSearch] = useState("");
   const [stateSearch, setStateSearch] = useState("");
   const [jsonExpanded, setJsonExpanded] = useState(false);
+  const [regionZones, setRegionZones] = useState<Zone[]>([]);
+
+  // ── Fetch Region Zones ──────────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (activeTab === "progreso") {
+      getZonesForRegion(run.currentRegion).then(setRegionZones);
+    }
+  }, [activeTab, run.currentRegion]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -810,24 +820,26 @@ export function DebuggerPanel() {
                 {activeTab === "progreso" && (
                   <>
                     <SectionLabel>Teleport de Zona</SectionLabel>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted text-[0.5rem] whitespace-nowrap">
-                        Zona actual: {run.currentZoneIndex}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-1">
-                      {Array.from({ length: 18 }, (_, i) => (
-                        <DbgButton
-                          key={i}
-                          onClick={() => teleportToZone(i)}
-                          variant={
-                            run.currentZoneIndex === i ? "accent" : "default"
-                          }
-                          className="text-center"
-                        >
-                          {i}
-                        </DbgButton>
-                      ))}
+                    <div className="flex flex-col gap-2 mb-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted text-[0.5rem] whitespace-nowrap">
+                          ID Actual: {run.currentZoneIndex}
+                        </span>
+                        <span className="text-brand text-[0.5rem] font-bold">
+                          {regionZones[run.currentZoneIndex]?.name || "Desconocida"}
+                        </span>
+                      </div>
+                      <select
+                        value={run.currentZoneIndex}
+                        onChange={(e) => teleportToZone(parseInt(e.target.value))}
+                        className="w-full bg-surface-alt border-2 border-border p-2 font-display text-[0.65rem] text-white focus:border-brand focus:outline-none custom-scrollbar"
+                      >
+                        {regionZones.map((zone, idx) => (
+                          <option key={zone.id || idx} value={idx}>
+                            {idx}: {zone.name} {zone.isGym ? "🏛️" : ""}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <SectionLabel>Badges de Gimnasio</SectionLabel>
