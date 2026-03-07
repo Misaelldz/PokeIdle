@@ -24,132 +24,6 @@ const supabase = createClient(
 
 const API = "https://pokeapi.co/api/v2";
 
-// ─── Pokémon a seedear ───────────────────────────────────────────────────────
-// Starters de todas las generaciones + sus evoluciones + legendarios frecuentes
-const PRIORITY_IDS = [
-  // Kanto starters
-  1, 2, 3, 4, 5, 6, 7, 8, 9,
-  // Kanto clásicos
-  25, 26, 52, 53, 54, 55, 58, 59, 60, 61, 62,
-  63, 64, 65, 66, 67, 68, 74, 75, 76,
-  79, 80, 81, 82, 92, 93, 94,
-  104, 105, 106, 107, 108, 109, 110,
-  111, 112, 113, 114, 115, 116, 117, 118, 119,
-  120, 121, 122, 123, 124, 125, 126, 127, 128,
-  129, 130, 131, 132, 133, 134, 135, 136,
-  137, 138, 139, 140, 141, 142, 143,
-  // Kanto legendarios
-  144, 145, 146, 150, 151,
-  // Johto starters
-  152, 153, 154, 155, 156, 157, 158, 159, 160,
-  // Johto comunes
-  161, 162, 163, 164, 165, 166, 167, 168,
-  172, 173, 174, 175, 176, 179, 180, 181,
-  183, 184, 185, 186, 187, 188, 189,
-  190, 191, 192, 193, 194, 195, 196, 197,
-  198, 199, 200, 201, 202, 203, 204, 205,
-  206, 207, 208, 209, 210, 211, 212, 213,
-  214, 215, 216, 217, 218, 219, 220, 221,
-  // Johto legendarios
-  243, 244, 245, 249, 250, 251,
-  // Hoenn starters
-  252, 253, 254, 255, 256, 257, 258, 259, 260,
-  // Hoenn comunes
-  261, 262, 263, 264, 265, 266, 267, 268, 269,
-  270, 271, 272, 273, 274, 275, 276, 277,
-  278, 279, 280, 281, 282, 283, 284, 285, 286,
-  287, 288, 289, 290, 291, 292, 293, 294, 295,
-  296, 297, 298, 299, 300, 301, 302, 303,
-  304, 305, 306, 307, 308, 309, 310,
-  311, 312, 313, 314, 315, 316, 317,
-  318, 319, 320, 321, 322, 323, 324,
-  325, 326, 327, 328, 329, 330, 331, 332,
-  333, 334, 335, 336, 337, 338, 339, 340,
-  341, 342, 343, 344, 345, 346, 347, 348,
-  349, 350, 351, 352, 353, 354, 355, 356,
-  // Hoenn legendarios
-  377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
-  // Sinnoh starters
-  387, 388, 389, 390, 391, 392, 393, 394, 395,
-  // Sinnoh comunes
-  396, 397, 398, 399, 400, 401, 402, 403, 404, 405,
-  406, 407, 408, 409, 410, 411, 412, 413, 414,
-  415, 416, 417, 418, 419, 420, 421, 422, 423,
-  424, 425, 426, 427, 428, 429, 430, 431, 432,
-  433, 434, 435, 436, 437, 438, 439, 440, 441,
-  442, 443, 444, 445, 446, 447, 448, 449, 450,
-  451, 452, 453, 454, 455, 456, 457, 458, 459, 460,
-  // Sinnoh legendarios
-  480, 481, 482, 483, 484, 485, 486, 487, 488, 491, 493,
-  // Unova starters
-  495, 496, 497, 498, 499, 500, 501, 502, 503,
-  // Unova comunes
-  504, 505, 506, 507, 508, 509, 510, 511, 512,
-  513, 514, 515, 516, 517, 518, 519, 520, 521,
-  522, 523, 524, 525, 526, 527, 528, 529, 530,
-  531, 532, 533, 534, 535, 536, 537, 538, 539,
-  540, 541, 542, 543, 544, 545, 546, 547, 548,
-  549, 550, 551, 552, 553, 554, 555, 556, 557,
-  558, 559, 560, 561, 562, 563, 564, 565, 566,
-  567, 568, 569, 570, 571, 572, 573, 574, 575,
-  576, 577, 578, 579, 580, 581, 582, 583, 584,
-  585, 586, 587, 588, 589, 590, 591, 592, 593,
-  // Unova legendarios
-  638, 639, 640, 641, 642, 643, 644, 645, 646,
-  // Kalos starters
-  650, 651, 652, 653, 654, 655, 656, 657, 658,
-  // Kalos comunes
-  659, 660, 661, 662, 663, 664, 665, 666, 667,
-  668, 669, 670, 671, 672, 673, 674, 675, 676,
-  677, 678, 679, 680, 681, 682, 683, 684, 685,
-  686, 687, 688, 689, 690, 691, 692, 693, 694,
-  695, 696, 697, 698, 699, 700, 701, 702, 703,
-  704, 705, 706, 707, 708, 709, 710, 711, 712, 713,
-  // Kalos legendarios
-  716, 717, 718,
-  // Alola starters
-  722, 723, 724, 725, 726, 727, 728, 729, 730,
-  // Alola comunes
-  731, 732, 733, 734, 735, 736, 737, 738, 739,
-  740, 741, 742, 743, 744, 745, 746, 747, 748,
-  749, 750, 751, 752, 753, 754, 755, 756, 757,
-  758, 759, 760, 761, 762, 763, 764, 765, 766,
-  767, 768, 769, 770, 771, 772, 773, 774, 775,
-  776, 777, 778, 779, 780, 781, 782, 783, 784,
-  // Alola legendarios
-  785, 786, 787, 788, 791, 792, 800,
-  // Ultra Beasts
-  793, 794, 795, 796, 797, 798, 799, 803, 804, 805, 806,
-  // Galar starters
-  810, 811, 812, 813, 814, 815, 816, 817, 818,
-  // Galar comunes
-  819, 820, 821, 822, 823, 824, 825, 826, 827,
-  828, 829, 830, 831, 832, 833, 834, 835, 836,
-  837, 838, 839, 840, 841, 842, 843, 844, 845,
-  846, 847, 848, 849, 850, 851, 852, 853, 854,
-  855, 856, 857, 858, 859, 860, 861, 862, 863,
-  864, 865, 866, 867, 868, 869, 870, 871, 872,
-  873, 874, 875, 876, 877, 878, 879, 880, 881,
-  882, 883, 884, 885, 886, 887,
-  // Galar legendarios
-  888, 889, 890, 891, 892, 893, 894, 895, 896, 897, 898,
-  // Paldea starters
-  906, 907, 908, 909, 910, 911, 912, 913, 914,
-  // Paldea comunes
-  915, 916, 917, 918, 919, 920, 921, 922, 923,
-  924, 925, 926, 927, 928, 929, 930, 931, 932,
-  933, 934, 935, 936, 937, 938, 939, 940, 941,
-  942, 943, 944, 945, 946, 947, 948, 949, 950,
-  951, 952, 953, 954, 955, 956, 957, 958, 959,
-  960, 961, 962, 963, 964, 965, 966, 967, 968,
-  969, 970, 971, 972, 973, 974, 975, 976, 977,
-  978, 979, 980, 981, 982, 983,
-  // Paradox
-  984, 985, 986, 987, 988, 989, 990,
-  991, 992, 993, 994, 995, 996, 997,
-  1001, 1002, 1003, 1004,
-  1005, 1006, 1007, 1008,
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -219,16 +93,12 @@ async function seedMove(url: string): Promise<void> {
 
 async function seedPokemon(id: number): Promise<void> {
   // Check if already cached
-  const { data: existing } = await supabase
-    .from("pokemon_cache")
-    .select("pokemon_id")
-    .eq("pokemon_id", id)
-    .single();
-
+  /* 
   if (existing) {
     console.log(`  [SKIP] #${id} already cached`);
     return;
   }
+  */
 
   const data = await fetchJson(`${API}/pokemon/${id}`);
 
@@ -258,16 +128,34 @@ async function seedPokemon(id: number): Promise<void> {
     })
     .sort((a: any, b: any) => b.level - a.level);
 
+  // Get all TM moves
+  const tmMoves: number[] = [];
+  for (const moveEntry of data.moves) {
+    const learnsMachineInAnyVersion = moveEntry.version_group_details.some(
+      (vgd: any) => vgd.move_learn_method.name === "machine"
+    );
+    if (learnsMachineInAnyVersion) {
+      const moveUrl = moveEntry.move.url as string;
+      const moveIdMatch = moveUrl.match(/\/move\/(\d+)\//);
+      if (moveIdMatch) {
+        tmMoves.push(parseInt(moveIdMatch[1]));
+      }
+    }
+  }
+
   // Seed moves concurrently (top 20 most recent to avoid too many requests)
   const movesToSeed = levelUpMoves.slice(0, 20);
   for (const m of movesToSeed) {
     try {
       await seedMove(m.url);
-      await delay(150);
+      await delay(50);
     } catch (e) {
       console.error(`  Move ${m.moveId} fetch failed, skipping`);
     }
   }
+
+  // Extraer ability principal (primera no-oculta)
+  const mainAbility = data.abilities.find((a: any) => !a.is_hidden)?.ability.name ?? null;
 
   // Insert pokemon
   const { error } = await supabase.from("pokemon_cache").upsert(
@@ -277,6 +165,8 @@ async function seedPokemon(id: number): Promise<void> {
       types: data.types.map((t: any) => t.type.name),
       base_stats: baseStats,
       level_up_moves: levelUpMoves.map(({ moveId, level }) => ({ moveId, level })),
+      tm_moves: tmMoves,
+      ability: mainAbility,
       sprite_url: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${id}.gif`,
     },
     { onConflict: "pokemon_id" }
@@ -322,25 +212,58 @@ async function seedSpecies(id: number): Promise<void> {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+const BATCH_SIZE = 10;  // Pokémon procesados simultáneamente
+const DELAY_BETWEEN_BATCHES = 1000; // ms entre lotes (respetar rate limit de PokeAPI)
+
 async function main() {
-  const total = PRIORITY_IDS.length;
-  console.log(`\nStarting seed — ${total} Pokémon\n`);
+  console.log("\nFetching Pokémon list from PokeAPI...");
+  
+  const res = await fetch(`${API}/pokemon?limit=1025&offset=0`);
+  const data = await res.json();
+  
+  // IDs base 1-1025 (sin formas alternativas)
+  const baseIds: number[] = data.results.map((_: any, i: number) => i + 1);
+  
+  // Formas especiales necesarias para mecánicas del juego
+  const specialFormIds: number[] = [
+    10034, // Aegislash-Blade (usado por abilities.engine.ts)
+  ];
+  
+  const allIds = [...baseIds, ...specialFormIds];
+  const total = allIds.length;
+  
+  console.log(`Seeding ${total} Pokémon in batches of ${BATCH_SIZE}\n`);
 
   let done = 0;
   let errors = 0;
 
-  for (const id of PRIORITY_IDS) {
-    try {
-      process.stdout.write(`[${done + 1}/${total}] Seeding #${id}... `);
-      await seedPokemon(id);
-      await seedSpecies(id);
-      await delay(400); // Rate limiting — PokeAPI pide no saturar
-      console.log("OK");
-    } catch (e: any) {
-      console.log(`ERROR: ${e.message}`);
-      errors++;
+  // Procesar en lotes paralelos
+  for (let i = 0; i < allIds.length; i += BATCH_SIZE) {
+    const batch = allIds.slice(i, i + BATCH_SIZE);
+    
+    const results = await Promise.allSettled(
+      batch.map(async (id) => {
+        await seedPokemon(id);
+        await seedSpecies(id);
+        return id;
+      })
+    );
+
+    for (let j = 0; j < results.length; j++) {
+      const result = results[j];
+      done++;
+      if (result.status === "fulfilled") {
+        console.log(`[${done}/${total}] #${batch[j]} OK`);
+      } else {
+        console.log(`[${done}/${total}] #${batch[j]} ERROR: ${result.reason?.message}`);
+        errors++;
+      }
     }
-    done++;
+
+    // Pausa entre lotes para no saturar PokeAPI
+    if (i + BATCH_SIZE < allIds.length) {
+      await delay(DELAY_BETWEEN_BATCHES);
+    }
   }
 
   console.log(`\nDone. ${done - errors}/${total} OK, ${errors} errors.`);

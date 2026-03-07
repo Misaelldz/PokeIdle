@@ -6,6 +6,7 @@ import {
   chooseBestMove,
   applyDamage,
   determineAttackOrder,
+  getAccuracyMultiplier,
 } from "../../../engine/combat.engine";
 import { calculateCaptureChance } from "../../../engine/capture.engine";
 import {
@@ -31,6 +32,8 @@ import {
   learnMovesOnLevelUp,
   getPokemonSpecies,
   getEvolutionChain,
+  fetchEggMoves,
+  COMMON_SELF_BOOSTS,
 } from "../services/pokeapi.service";
 import { ITEMS, generateLootOptions } from "../../../lib/items";
 import { generateUid } from "../../../utils/random";
@@ -41,7 +44,12 @@ import {
   scaleGymPokemon,
 } from "../../../engine/boss.engine";
 import { calculateMoneyGain } from "../../../engine/economy.engine";
-import { handleStanceChange } from "../../../engine/abilities.engine";
+import {
+  handleStanceChange,
+  applyOnEntryAbility,
+  applyOnTurnAbility,
+  applyAbilityDamageModifier,
+} from "../../../engine/abilities.engine";
 import {
   applyMegaEvolution,
   revertMegaEvolution,
@@ -244,6 +252,11 @@ export function useEngineTick() {
                 ].slice(-40),
               };
             });
+
+            // Trigger On-Entry Abilities (Elite Four) - Note: this runs AFTER setRun in a follow-up tick or here if we use a helper. 
+            // Actually, for simplicity, I'll add a helper call or just use a simpler method.
+            // But setRun is async. Best is to handle it inside setRun or in the idle state turnCount 0.
+            // Wait, turnCount 0 is a good place.
             return;
           }
 
@@ -579,6 +592,16 @@ export function useEngineTick() {
           if (nextP) {
             pushLog(`¡Adelante ${nextP.name}!`, "normal");
             bState.playerPokemon = nextP;
+
+            // Trigger On-Entry Ability (Player Swap-in)
+            const pEntry = applyOnEntryAbility(nextP, bState.enemyPokemon);
+            if (pEntry.updatedDefender) {
+              bState.enemyPokemon = {
+                ...bState.enemyPokemon,
+                ...pEntry.updatedDefender,
+              };
+            }
+            if (pEntry.log) pushLog(pEntry.log, "normal");
           }
         } else {
           // In manual battle, we show a selection modal
@@ -992,6 +1015,36 @@ export function useEngineTick() {
 
         bState.turnState = "turn_start";
         turnStateRef.current = "turn_start";
+
+        // Trigger On-Entry Abilities (Battle Start)
+        if (bState.turnCount === 0 && !bState.onEntryTriggered) {
+          const pEntry = applyOnEntryAbility(
+            bState.playerPokemon,
+            bState.enemyPokemon,
+          );
+          if (pEntry.updatedDefender) {
+            bState.enemyPokemon = {
+              ...bState.enemyPokemon,
+              ...pEntry.updatedDefender,
+            };
+          }
+          if (pEntry.log) pushLog(pEntry.log, "normal");
+
+          const eEntry = applyOnEntryAbility(
+            bState.enemyPokemon,
+            bState.playerPokemon,
+          );
+          if (eEntry.updatedDefender) {
+            bState.playerPokemon = {
+              ...bState.playerPokemon,
+              ...eEntry.updatedDefender,
+            };
+          }
+          if (eEntry.log) pushLog(eEntry.log, "normal");
+
+          bState.onEntryTriggered = true;
+        }
+
         nextState.currentBattle = bState;
         nextState.battleLog = logs.slice(-40);
         return nextState;
@@ -1034,6 +1087,18 @@ export function useEngineTick() {
       }
 
       if (bState.turnState === "turn_start") {
+        // Turn-based abilities
+        const playerTurnRes = applyOnTurnAbility(bState.playerPokemon);
+        if (playerTurnRes.updatedPokemon !== bState.playerPokemon) {
+          bState.playerPokemon = playerTurnRes.updatedPokemon;
+          if (playerTurnRes.log) pushLog(playerTurnRes.log, "normal");
+        }
+        const enemyTurnRes = applyOnTurnAbility(bState.enemyPokemon);
+        if (enemyTurnRes.updatedPokemon !== bState.enemyPokemon) {
+          bState.enemyPokemon = enemyTurnRes.updatedPokemon;
+          if (enemyTurnRes.log) pushLog(enemyTurnRes.log, "normal");
+        }
+
         // We are in turn_start, and need to process the next actor in the queue
         const currentActor = (bState.turnQueue || [])[0]; // "p" or "e"
 
@@ -1161,6 +1226,23 @@ export function useEngineTick() {
                 bState.activeMechanic,
               );
 
+              // ── ACCURACY & EVASION CHECK ────────────────────────────────
+              const accModifier = getAccuracyMultiplier(
+                attacker.statModifiers.acc,
+                defender.statModifiers.eva,
+                bState.activeMechanic,
+              );
+              const hitChance = (resolvedMove.accuracy || 100) * accModifier;
+
+              if (Math.random() * 100 > hitChance) {
+                pushLog(
+                  `¡El ataque de ${attacker.name} falló!`,
+                  isPlayer ? "normal" : "normal",
+                );
+                damage = 0;
+                // Move missed, skip status effects but keep turn progression
+              }
+
               // Calculate Status Effect from Move
               let statusEffectToApply = null;
               if (
@@ -1200,38 +1282,54 @@ export function useEngineTick() {
               };
 
               // ── SELF STAT BOOST ───────────────────────────────────────────
-              if (resolvedMove?.selfBoost) {
-                const { stat, stages } = resolvedMove.selfBoost;
-                if (isPlayer) {
-                  const currentStage =
-                    bState.playerPokemon.statModifiers[
-                      stat as keyof typeof bState.playerPokemon.statModifiers
-                    ] ?? 0;
-                  const newStage = Math.min(6, currentStage + stages);
-                  bState.playerPokemon = {
-                    ...bState.playerPokemon,
-                    statModifiers: {
-                      ...bState.playerPokemon.statModifiers,
-                      [stat]: newStage,
-                    },
-                  };
-                  pushLog(
-                    `¡${bState.playerPokemon.name} subió su ${stat}!`,
-                    "level",
-                  );
-                } else {
-                  const currentStage =
-                    bState.enemyPokemon.statModifiers[
-                      stat as keyof typeof bState.enemyPokemon.statModifiers
-                    ] ?? 0;
-                  const newStage = Math.min(6, currentStage + stages);
-                  bState.enemyPokemon = {
-                    ...bState.enemyPokemon,
-                    statModifiers: {
-                      ...bState.enemyPokemon.statModifiers,
-                      [stat]: newStage,
-                    },
-                  };
+              const selfBoosts = resolvedMove?.selfBoost || (resolvedMove?.moveId ? COMMON_SELF_BOOSTS[resolvedMove.moveId] : null);
+
+              if (selfBoosts && selfBoosts.length > 0) {
+                for (const boost of selfBoosts) {
+                  const { stat, stages } = boost;
+                  if (isPlayer) {
+                    const currentStage =
+                      bState.playerPokemon.statModifiers[
+                        stat as keyof typeof bState.playerPokemon.statModifiers
+                      ] ?? 0;
+                    const newStage = Math.max(
+                      -6,
+                      Math.min(6, currentStage + stages),
+                    );
+                    bState.playerPokemon = {
+                      ...bState.playerPokemon,
+                      statModifiers: {
+                        ...bState.playerPokemon.statModifiers,
+                        [stat]: newStage,
+                      },
+                    };
+                    console.log(
+                      `[ENGINE] Player ${bState.playerPokemon.name} boost: ${stat} ${currentStage} -> ${newStage}`,
+                    );
+                    pushLog(
+                      `¡${bState.playerPokemon.name} subió su ${stat}!`,
+                      "level",
+                    );
+                  } else {
+                    const currentStage =
+                      bState.enemyPokemon.statModifiers[
+                        stat as keyof typeof bState.enemyPokemon.statModifiers
+                      ] ?? 0;
+                    const newStage = Math.max(
+                      -6,
+                      Math.min(6, currentStage + stages),
+                    );
+                    bState.enemyPokemon = {
+                      ...bState.enemyPokemon,
+                      statModifiers: {
+                        ...bState.enemyPokemon.statModifiers,
+                        [stat]: newStage,
+                      },
+                    };
+                    console.log(
+                      `[ENGINE] Enemy ${bState.enemyPokemon.name} boost: ${stat} ${currentStage} -> ${newStage}`,
+                    );
+                  }
                 }
               }
 
@@ -1303,28 +1401,66 @@ export function useEngineTick() {
             ? bState.playerCurrentMove
             : bState.enemyCurrentMove;
 
-          // Apply damage
-          const { nextHP, focusBandTriggered } = applyDamage(
+          // Defensive ability check (Levitate, Volt Absorb, etc.)
+          const abilityRes = applyAbilityDamageModifier(
+            attacker,
             defender,
+            anim.moveType,
             anim.damage,
           );
 
-          if (isPlayer) {
-            bState.enemyPokemon = { ...bState.enemyPokemon, currentHP: nextHP };
+          if (abilityRes.blocked) {
+            if (abilityRes.healAmount) {
+              const healedDefender = {
+                ...defender,
+                currentHP: Math.min(
+                  defender.maxHP,
+                  defender.currentHP + abilityRes.healAmount,
+                ),
+              };
+              if (isPlayer) bState.enemyPokemon = healedDefender;
+              else bState.playerPokemon = healedDefender;
+            }
+            if (abilityRes.forceHP !== undefined) {
+              const forcedDefender = {
+                ...defender,
+                currentHP: abilityRes.forceHP,
+              };
+              if (isPlayer) bState.enemyPokemon = forcedDefender;
+              else bState.playerPokemon = forcedDefender;
+            }
+            if (abilityRes.log) pushLog(abilityRes.log, "normal");
+            // Skip normal damage application
           } else {
-            bState.playerPokemon = {
-              ...bState.playerPokemon,
-              currentHP: nextHP,
-            };
-          }
-
-          // Apply status if any
-          if (anim.statusApplied && !defender.status) {
-            defender.status = anim.statusApplied;
-            pushLog(
-              `¡${defender.name} ahora está ${anim.statusApplied}!`,
-              isPlayer ? "normal" : "danger",
+            const finalDamage = Math.floor(anim.damage * abilityRes.multiplier);
+            const { nextHP, focusBandTriggered } = applyDamage(
+              defender,
+              finalDamage,
             );
+
+            if (isPlayer) {
+              bState.enemyPokemon = { ...bState.enemyPokemon, currentHP: nextHP };
+            } else {
+              bState.playerPokemon = {
+                ...bState.playerPokemon,
+                currentHP: nextHP,
+              };
+            }
+
+            // Apply status if any (only if damage wasn't blocked/immune)
+            if (anim.statusApplied && !defender.status && nextHP > 0) {
+              defender.status = anim.statusApplied;
+              pushLog(
+                `¡${defender.name} ahora está ${anim.statusApplied}!`,
+                isPlayer ? "normal" : "danger",
+              );
+            }
+
+            if (focusBandTriggered)
+              pushLog(
+                `¡${defender.name} resistió el golpe con su Cinta Focus!`,
+                "normal",
+              );
           }
 
           // Logs
@@ -1340,11 +1476,6 @@ export function useEngineTick() {
           if (anim.effectiveness === 0)
             pushLog(`No afecta a ${defender.name}...`, "normal");
           if (anim.isCrit) pushLog("¡Un golpe crítico!", "crit");
-          if (focusBandTriggered)
-            pushLog(
-              `¡${defender.name} resistió el golpe con su Cinta Focus!`,
-              "normal",
-            );
 
           bState.pendingAnimation = null;
         }

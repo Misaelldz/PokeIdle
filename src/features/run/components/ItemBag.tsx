@@ -10,10 +10,13 @@ import { ItemSprite } from "../../../components/ui/ItemSprite";
 import { PixelSprite } from "../../../components/ui/PixelSprite";
 import { StarOff } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
+import { canLearnTM } from "../services/pokeapi.service";
 
 export function ItemBag() {
-  const { run, setRun, setMeta } = useGame();
+  const { run, setRun, setMeta, notify } = useGame();
   const [useTargetModal, setUseTargetModal] = useState<string | null>(null);
+  const [tmCompatibility, setTmCompatibility] = useState<Record<string, boolean>>({});
+  const [loadingCompatibility, setLoadingCompatibility] = useState(false);
 
   if (!run.isActive) return null;
 
@@ -25,6 +28,20 @@ export function ItemBag() {
 
     const itemDef = ITEMS[useTargetModal];
     if (!itemDef) return;
+
+    if (itemDef.category === "tm") {
+      const moveId = itemDef.effect.type === "teach" ? itemDef.effect.moveId : 0;
+      const canLearn = await canLearnTM(pokemon.pokemonId, moveId);
+      if (!canLearn) {
+        notify({ 
+          message: `${pokemon.name} no puede aprender ${itemDef.name}.`, 
+          type: "defeat", 
+          icon: "❌", 
+          duration: 2500 
+        });
+        return;
+      }
+    }
 
     if (itemDef.category === "held") {
       const { success, newPokemon, newInventory } = equipItem(
@@ -295,14 +312,29 @@ export function ItemBag() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => {
+                        onClick={async () => {
                           if (item.category === "ball") {
                             handleThrowBall(id);
                           } else {
+                            if (item.category === "tm") {
+                              setLoadingCompatibility(true);
+                              const results: Record<string, boolean> = {};
+                              const moveId = item.effect.type === "teach" ? item.effect.moveId : 0;
+                              await Promise.all(
+                                run.team.map(async (p) => {
+                                  results[p.uid] = await canLearnTM(p.pokemonId, moveId);
+                                })
+                              );
+                              setTmCompatibility(results);
+                              setLoadingCompatibility(false);
+                            } else {
+                              setTmCompatibility({});
+                            }
                             setUseTargetModal(id);
                           }
                         }}
                         className="px-2 py-1 text-[0.45rem]"
+                        disabled={loadingCompatibility}
                       >
                         {item.category === "held"
                           ? "EQUIPAR"
@@ -353,6 +385,17 @@ export function ItemBag() {
                         showScanlines={false}
                         alt={p.name}
                       />
+                      {/* Compatibility Badge */}
+                      {tmCompatibility[p.uid] !== undefined && (
+                        <div className={clsx(
+                          "absolute top-0 right-0 text-[0.4rem] font-display px-1 py-0.5 border z-10",
+                          tmCompatibility[p.uid]
+                            ? "bg-emerald-900/90 border-emerald-500 text-emerald-400"
+                            : "bg-red-900/90 border-red-800 text-red-100 opacity-60"
+                        )}>
+                          {tmCompatibility[p.uid] ? "✓" : "✗"}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col items-start gap-1">
                       <span className="font-display text-[0.55rem] tracking-wider text-left max-w-[120px] truncate">

@@ -57,7 +57,14 @@ export function getZeroEVs(): PokemonStats {
 }
 
 // Official Pokemon stat formula
-export function calculateStats(base: PokemonStats, ivs: PokemonStats, evs: PokemonStats, level: number, natureKey: string): PokemonStats {
+export function calculateStats(
+  base: PokemonStats,
+  ivs: PokemonStats,
+  evs: PokemonStats,
+  level: number,
+  natureKey: string,
+  ability?: string | null,
+): PokemonStats {
   const nature = NATURES[natureKey] || NATURES["hardy"];
   
   const calcOtherStat = (statName: keyof PokemonStats) => {
@@ -68,7 +75,7 @@ export function calculateStats(base: PokemonStats, ivs: PokemonStats, evs: Pokem
     return Math.floor(core * modifier);
   };
 
-  return {
+  const finalStats = {
     hp: Math.floor(0.01 * (2 * base.hp + ivs.hp + Math.floor(0.25 * evs.hp)) * level) + level + 10,
     attack: calcOtherStat("attack"),
     defense: calcOtherStat("defense"),
@@ -76,4 +83,11 @@ export function calculateStats(base: PokemonStats, ivs: PokemonStats, evs: Pokem
     spDef: calcOtherStat("spDef"),
     speed: calcOtherStat("speed"),
   };
+
+  // Ability multipliers (Simplified here to avoid circular dependencies with abilities.engine)
+  if (ability === "huge-power" || ability === "pure-power") {
+    finalStats.attack *= 2;
+  }
+
+  return finalStats;
 }

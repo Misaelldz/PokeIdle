@@ -5,6 +5,7 @@ import {
   getPokemonData,
   getPokemonSpecies,
   getEvolutionChain,
+  COMMON_SELF_BOOSTS,
 } from "../features/run/services/pokeapi.service";
 import { levelUpPokemon, xpToNextLevel } from "./xp.engine";
 
@@ -427,6 +428,7 @@ export async function useItemOnPokemon(
         priority: md.priority || 0,
         enabled: true,
         statusEffect,
+        selfBoost: COMMON_SELF_BOOSTS[md.id] as any,
       };
 
       const nextInv = { ...inventory, [itemId]: (inventory[itemId] || 0) - 1 };

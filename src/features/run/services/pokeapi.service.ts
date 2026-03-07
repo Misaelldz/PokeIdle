@@ -21,16 +21,24 @@ import { supabase } from "../../../lib/supabase";
 
 const API_BASE = "https://pokeapi.co/api/v2";
 
-const COMMON_SELF_BOOSTS: Record<number, { stat: string; stages: number }> = {
-  14: { stat: "spe", stages: 2 }, // Agilidad
-  56: { stat: "atk", stages: 2 }, // Danza Espada
-  87: { stat: "def", stages: 1 }, // Fortaleza (Harden)
-  116: { stat: "def", stages: 2 }, // Defensa Férrea (Iron Defense)
-  156: { stat: "spa", stages: 1 }, // Carga
-  164: { stat: "crit", stages: 2 }, // Foco de Energía (Focus Energy - usually +2 crit ratio)
-  207: { stat: "spe", stages: 1 }, // Subir velocidad (varios)
-  239: { stat: "atk", stages: 1 }, // Dragon Dance (atk) - Note: officially also speed
-  349: { stat: "atk", stages: 1 }, // Agudeza
+export const COMMON_SELF_BOOSTS: Record<number, { stat: string; stages: number }[]> = {
+  14: [{ stat: "atk", stages: 2 }], // Swords Dance (Danza Espada)
+  97: [{ stat: "spe", stages: 2 }], // Agility (Agilidad)
+  110: [{ stat: "def", stages: 1 }], // Harden (Fortaleza)
+  334: [{ stat: "def", stages: 2 }], // Iron Defense (Defensa Férrea)
+  349: [
+    { stat: "atk", stages: 1 },
+    { stat: "spe", stages: 1 },
+  ], // Dragon Dance (Danza Dragón)
+  347: [
+    { stat: "spa", stages: 1 },
+    { stat: "spd", stages: 1 },
+  ], // Calm Mind (Paz Mental)
+  339: [
+    { stat: "atk", stages: 1 },
+    { stat: "def", stages: 1 },
+  ], // Bulk Up (Corpulencia)
+  164: [{ stat: "crit", stages: 2 }], // Focus Energy (Foco Energía)
 };
 
 function mapAilment(
@@ -101,6 +109,7 @@ export async function getPokemonData(
       .maybeSingle();
 
     if (cachedPokemon) {
+      const ability = cachedPokemon.ability || null;
       // Filter level-up moves from cache
       const eligibleMoves = (
         cachedPokemon.level_up_moves as { moveId: number; level: number }[]
@@ -168,6 +177,7 @@ export async function getPokemonData(
         evs,
         level,
         nature,
+        ability,
       );
       const maxHP = stats.hp;
 
@@ -202,6 +212,7 @@ export async function getPokemonData(
           crit: 0,
         },
         heldItem: null,
+        ability: ability || null,
         isShiny: shiny,
         caughtAt: "Zona desconocida",
         caughtLevel: level,
@@ -223,6 +234,9 @@ export async function getPokemonData(
   });
 
   const types = data.types.map((t: any) => t.type.name);
+
+  // Extraer ability principal (primera no-oculta)
+  const mainAbility = data.abilities.find((a: any) => !a.is_hidden)?.ability.name ?? null;
 
   // Extract level-up moves
   const movesToCheck = data.moves.filter((m: any) => {
@@ -253,8 +267,8 @@ export async function getPokemonData(
 
     try {
       const md = await fetchJson(mw.url);
-      // Simplify logic: use damaging moves mostly, or status if we want
-      if (md.power && md.power > 0) {
+      // Simplify logic: use damaging moves mostly, OR status moves if they are known self-boosts
+      if ((md.power && md.power > 0) || (COMMON_SELF_BOOSTS[md.id])) {
         const spanText =
           md.names.find((n: any) => n.language.name === "es")?.name || md.name;
 
@@ -308,7 +322,7 @@ export async function getPokemonData(
   const ivs = forcedIVs || generateRandomIVs();
   const evs = getZeroEVs();
   const nature = forcedNature || getRandomNature();
-  const stats = calculateStats(baseStats, ivs, evs, level, nature);
+  const stats = calculateStats(baseStats, ivs, evs, level, nature, mainAbility);
   const maxHP = stats.hp;
 
   return {
@@ -340,6 +354,7 @@ export async function getPokemonData(
       crit: 0,
     },
     heldItem: null,
+    ability: mainAbility,
     isShiny: shiny,
     caughtAt: "Zona desconocida",
     caughtLevel: level,
@@ -608,6 +623,7 @@ export async function getMissingMoves(
         statusEffect: md.ailment
           ? { condition: md.ailment as any, chance: md.ailment_chance ?? 100 }
           : undefined,
+        selfBoost: COMMON_SELF_BOOSTS[md.move_id] as any,
       });
     }
 
@@ -630,4 +646,26 @@ export async function fetchAllPokemonList(): Promise<
       name: r.name,
     };
   });
+}
+
+/**
+ * Verifica si un Pokémon puede aprender un movimiento por MT.
+ * Consulta pokemon_cache.tm_moves (array de moveIds).
+ */
+export async function canLearnTM(
+  pokemonId: number,
+  moveId: number,
+): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from("pokemon_cache")
+      .select("tm_moves")
+      .eq("pokemon_id", pokemonId)
+      .maybeSingle();
+
+    if (!data?.tm_moves) return false;
+    return (data.tm_moves as number[]).includes(moveId);
+  } catch {
+    return false;
+  }
 }

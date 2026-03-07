@@ -26,6 +26,22 @@ function getStatMultiplier(stage: number, mechanic?: GymMechanic): number {
   }
 }
 
+export function getAccuracyMultiplier(
+  accStage: number,
+  evaStage: number,
+  mechanic?: GymMechanic,
+): number {
+  const effectiveAcc = mechanic === "inversion_stats" ? -accStage : accStage;
+  const effectiveEva = mechanic === "inversion_stats" ? -evaStage : evaStage;
+  const stage = Math.max(-6, Math.min(6, effectiveAcc - effectiveEva));
+
+  if (stage >= 0) {
+    return (3 + stage) / 3;
+  } else {
+    return 3 / (3 + Math.abs(stage));
+  }
+}
+
 export function calculateDamage(
   attacker: ActivePokemon,
   defender: ActivePokemon,
@@ -98,6 +114,22 @@ export function calculateDamage(
   if (isStab) {
     damage = Math.floor(damage * 1.5);
   }
+
+  // Attacker abilities that modify damage (Blaze, Torrent, etc.)
+  let attackerAbilityMult = 1;
+  const attackerHpRatio = attacker.currentHP / attacker.maxHP;
+  const attackerIsLowHP = attackerHpRatio <= 1 / 3;
+  if (attackerIsLowHP) {
+    if (attacker.ability === "overgrow" && move.type === "grass")
+      attackerAbilityMult = 1.5;
+    if (attacker.ability === "blaze" && move.type === "fire")
+      attackerAbilityMult = 1.5;
+    if (attacker.ability === "torrent" && move.type === "water")
+      attackerAbilityMult = 1.5;
+    if (attacker.ability === "swarm" && move.type === "bug")
+      attackerAbilityMult = 1.5;
+  }
+  damage = Math.floor(damage * attackerAbilityMult);
 
   // Environmental Power Mods
   let envMod = 1;
@@ -183,15 +215,24 @@ export function chooseBestMove(
   let maxDmg = -1;
 
   for (const move of allowedMoves) {
-    if (move.selfBoost && move.power === 0) {
-      const currentStage =
-        pokemon.statModifiers[
-          move.selfBoost.stat as keyof typeof pokemon.statModifiers
-        ] ?? 0;
-      if (currentStage < 3) {
-        // Solo usar buff si hay margen decoroso (+3)
+    if (move.selfBoost && move.selfBoost.length > 0 && move.power === 0) {
+      let canStillBoost = false;
+      let totalBoostStages = 0;
+      for (const boost of move.selfBoost) {
+        const currentStage =
+          pokemon.statModifiers[
+            boost.stat as keyof typeof pokemon.statModifiers
+          ] ?? 0;
+        if (currentStage < 3) {
+          // Solo usar buff si hay margen decoroso (+3)
+          canStillBoost = true;
+          totalBoostStages += boost.stages;
+        }
+      }
+
+      if (canStillBoost) {
         // Simulamos que el buff vale un 50% extra del daño máximo actual por cada stage
-        const boostVal = 0.5 * move.selfBoost.stages;
+        const boostVal = 0.5 * totalBoostStages;
         const projectedVal = 50 * (1 + boostVal); // Valor arbitrario para competir con daño
         if (projectedVal > maxDmg) {
           maxDmg = projectedVal;
@@ -203,8 +244,31 @@ export function chooseBestMove(
 
     // calculateDamage already factors in power, stats, level, STAB, effectiveness and random rolls.
     const res = calculateDamage(pokemon, opponent, move, mechanic);
-    if (res.damage > maxDmg) {
-      maxDmg = res.damage;
+    const accMod = getAccuracyMultiplier(
+      pokemon.statModifiers.acc,
+      opponent.statModifiers.eva,
+      mechanic,
+    );
+    const hitChance = Math.min(100, (move.accuracy || 100) * accMod) / 100;
+
+    // AI Projection considering Ability Boost
+    let aiAbilityBoost = 1;
+    const aiHpRatio = pokemon.currentHP / pokemon.maxHP;
+    if (aiHpRatio <= 1 / 3) {
+      if (pokemon.ability === "overgrow" && move.type === "grass")
+        aiAbilityBoost = 1.5;
+      if (pokemon.ability === "blaze" && move.type === "fire")
+        aiAbilityBoost = 1.5;
+      if (pokemon.ability === "torrent" && move.type === "water")
+        aiAbilityBoost = 1.5;
+      if (pokemon.ability === "swarm" && move.type === "bug")
+        aiAbilityBoost = 1.5;
+    }
+
+    const finalScore = res.damage * hitChance * aiAbilityBoost;
+
+    if (finalScore > maxDmg) {
+      maxDmg = finalScore;
       bestMove = move;
     }
   }

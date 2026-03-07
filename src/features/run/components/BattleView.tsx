@@ -296,26 +296,12 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
                 </span>
               </div>
 
-              {/* Stat Modifiers & Status Badges */}
+              {/* Status Badges */}
               <div className="flex flex-wrap gap-1 w-full mt-1">
                 {enemyPokemon.status && (
                   <span className="text-[0.45rem] font-display text-white bg-danger px-1 py-0.5 shadow-sm">
                     {enemyPokemon.status}
                   </span>
-                )}
-                {Object.entries(enemyPokemon.statModifiers).map(
-                  ([stat, val]) => {
-                    if (val === 0) return null;
-                    const color = val > 0 ? "bg-brand" : "bg-danger";
-                    return (
-                      <span
-                        key={stat}
-                        className={`text-[0.45rem] font-display text-white ${color} px-1 py-0.5 shadow-sm uppercase`}
-                      >
-                        {stat} {val > 0 ? `+${val}` : val}
-                      </span>
-                    );
-                  },
                 )}
               </div>
 
@@ -332,6 +318,7 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
                   currentHP={enemyPokemon.currentHP}
                   maxHP={enemyPokemon.maxHP}
                   showText={true}
+                  statModifiers={enemyPokemon.statModifiers}
                   barColor={
                     battle.isBossBattle && battle.bossCurrentBar === 1
                       ? "bg-orange-500"
@@ -429,20 +416,6 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
                     {playerPokemon.status}
                   </span>
                 )}
-                {Object.entries(playerPokemon.statModifiers).map(
-                  ([stat, val]) => {
-                    if (val === 0) return null;
-                    const color = val > 0 ? "bg-brand" : "bg-danger";
-                    return (
-                      <span
-                        key={stat}
-                        className={`text-[0.45rem] font-display text-white ${color} px-1 py-0.5 shadow-sm uppercase`}
-                      >
-                        {stat} {val > 0 ? `+${val}` : val}
-                      </span>
-                    );
-                  },
-                )}
               </div>
 
               <div className="w-full mt-1">
@@ -450,6 +423,7 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
                   currentHP={playerPokemon.currentHP}
                   maxHP={playerPokemon.maxHP}
                   showText={true}
+                  statModifiers={playerPokemon.statModifiers}
                 />
                 <div className="mt-2">
                   <XPBar
@@ -472,7 +446,7 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
                   animState.isPlayerFainting && "anim-faint-drop",
                 )}
               >
-                <div className="absolute bottom-6 w-40 sm:w-56 h-12 rounded-[100%] bg-black/50 blur-[4px] -z-10"></div>
+                <div className="absolute bottom-6 w-40 sm:w-56 h-12 rounded-[100%] bg-black/50 blur-xs -z-10"></div>
                 {run.isManualBattle && battle?.phase === "active" && (
                   <div className="absolute bottom-full mb-2 right-0 z-30">
                     <MegaButton
@@ -588,7 +562,7 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
 
       {/* Game Over Overlay */}
       {battle?.phase === "defeat" && (
-        <div className="absolute inset-0 z-[110] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-1000">
+        <div className="absolute inset-0 z-110 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-1000">
           <div className="bg-danger/20 border-y-4 border-danger w-full py-8 mb-12 flex flex-col items-center">
             <h2 className="font-display text-3xl text-danger drop-shadow-[0_0_15px_rgba(255,0,0,0.5)] animate-pulse tracking-[0.3em]">
               GAME OVER

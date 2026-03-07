@@ -57,7 +57,7 @@ export interface ActiveMove {
   selfBoost?: {
     stat: "atk" | "def" | "spa" | "spd" | "spe" | "crit";
     stages: number;
-  };
+  }[];
 }
 
 export interface ActivePokemon {
@@ -89,6 +89,7 @@ export interface ActivePokemon {
     crit: number;
   };
   heldItem: string | null;
+  ability: string | null;
   isShiny: boolean;
   caughtAt: string;
   caughtLevel: number;
@@ -164,6 +165,7 @@ export interface BattleState {
   playerCurrentMove?: ActiveMove | null;
   enemyCurrentMove?: ActiveMove | null;
   usedManualTurn?: boolean;
+  onEntryTriggered?: boolean;
 }
 
 export interface MoveLearnData {
