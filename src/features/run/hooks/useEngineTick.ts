@@ -2102,53 +2102,78 @@ export function useEngineTick() {
     const pokemon = run.team.find((p) => p.uid === pokemonUid);
     if (!pokemon) return;
 
-    learnMovesOnLevelUp(pokemon, level, fromLevel ?? level).then((newMove) => {
-      if (!newMove) return;
+    learnMovesOnLevelUp(pokemon, level, fromLevel ?? level).then((newMoves) => {
+      if (newMoves.length === 0) return;
+
       setRun((prev) => {
-        // Already has a pending learn — don't overwrite, but keep newMove in mind?
-        // Actually, the modal blocks the tick, so we only process one at a time.
-        if (prev.pendingMoveLearn) return prev;
-        const p = prev.team.find((t) => t.uid === pokemonUid);
-        if (!p) return prev;
+        const pIndex = prev.team.findIndex((t) => t.uid === pokemonUid);
+        if (pIndex === -1) return prev;
 
-        // If has room, add directly
-        if (p.moves.length < 4) {
-          const nextMoves = [...p.moves, newMove];
-          const updatedTeam = prev.team.map((t) =>
-            t.uid === pokemonUid ? { ...t, moves: nextMoves } : t,
-          );
+        let currentPokemon = prev.team[pIndex];
+        let nextBattle = prev.currentBattle;
+        const newLogs = [...prev.battleLog];
+        const movesToAsk: any[] = [];
 
-          let nextBattle = prev.currentBattle;
-          if (nextBattle && nextBattle.playerPokemon.uid === pokemonUid) {
-            nextBattle = {
-              ...nextBattle,
-              playerPokemon: { ...nextBattle.playerPokemon, moves: nextMoves },
+        for (const move of newMoves) {
+          if (currentPokemon.moves.length < 4) {
+            currentPokemon = {
+              ...currentPokemon,
+              moves: [...currentPokemon.moves, move],
             };
+            newLogs.push({
+              id: generateUid(),
+              text: `¡${currentPokemon.name} aprendió ${move.moveName}!`,
+              type: "level" as const,
+            });
+          } else {
+            movesToAsk.push({
+              pokemonUid,
+              pokemonName: currentPokemon.name,
+              newMove: move,
+            });
           }
+        }
 
-          return {
-            ...prev,
-            team: updatedTeam,
-            currentBattle: nextBattle,
-            battleLog: [
-              ...prev.battleLog,
-              {
-                id: Date.now().toString(),
-                text: `¡${p.name} aprendió ${newMove.moveName}!`,
-                type: "level" as const,
-              },
-            ].slice(-40),
+        // Update team
+        const nextTeam = prev.team.map((t) =>
+          t.uid === pokemonUid ? currentPokemon : t,
+        );
+
+        // Update battle if active
+        if (nextBattle && nextBattle.playerPokemon.uid === pokemonUid) {
+          nextBattle = {
+            ...nextBattle,
+            playerPokemon: currentPokemon,
           };
         }
-        // Full moveset — open modal
-        return {
+
+        const nextState = {
           ...prev,
-          pendingMoveLearn: {
-            pokemonUid,
-            pokemonName: p.name,
-            newMove,
-          },
+          team: nextTeam,
+          currentBattle: nextBattle,
+          battleLog: newLogs.slice(-40),
         };
+
+        if (movesToAsk.length > 0) {
+          if (nextState.pendingMoveLearn) {
+            // Already showing one, add ALL these to the queue
+            nextState.pendingMoveLearnQueue = [
+              ...(nextState.pendingMoveLearnQueue || []),
+              ...movesToAsk,
+            ];
+          } else {
+            // Show the first one, queue the rest
+            nextState.pendingMoveLearn = movesToAsk[0];
+            if (movesToAsk.length > 1) {
+              nextState.pendingMoveLearnQueue = [
+                ...(nextState.pendingMoveLearnQueue || []),
+                ...movesToAsk.slice(1),
+              ];
+            }
+          }
+        }
+
+        return nextState;
       });
     });
   }, [
@@ -2156,6 +2181,22 @@ export function useEngineTick() {
     (run as any).__checkMoveLearnAt,
     run.pendingMoveLearn,
   ]);
+
+  // ─── Async: Process Move Learn Queue ────────────────────────────────────
+  useEffect(() => {
+    if (run.pendingMoveLearn || !run.pendingMoveLearnQueue || run.pendingMoveLearnQueue.length === 0) return;
+
+    setRun(prev => {
+      if (prev.pendingMoveLearn || !prev.pendingMoveLearnQueue || prev.pendingMoveLearnQueue.length === 0) return prev;
+      
+      const [next, ...rest] = prev.pendingMoveLearnQueue;
+      return {
+        ...prev,
+        pendingMoveLearn: next,
+        pendingMoveLearnQueue: rest.length > 0 ? rest : null
+      };
+    });
+  }, [run.pendingMoveLearn, run.pendingMoveLearnQueue]);
 
   // ─── Async: Evolution Check on Level Up ─────────────────────────────────
   useEffect(() => {

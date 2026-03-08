@@ -460,7 +460,7 @@ export async function learnMovesOnLevelUp(
   pokemon: import("../types/game.types").ActivePokemon,
   newLevel: number,
   fromLevel?: number, // if passed, checks all moves in the range (fromLevel, newLevel]
-): Promise<import("../types/game.types").ActiveMove | null> {
+): Promise<import("../types/game.types").ActiveMove[]> {
   try {
     // Fast path: usar pokemon_cache para encontrar el movimiento del nivel
     const { data: cachedPokemon } = await supabase
@@ -470,8 +470,6 @@ export async function learnMovesOnLevelUp(
       .maybeSingle();
 
     if (cachedPokemon) {
-      const minLevel = fromLevel != null ? fromLevel + 1 : newLevel;
-
       // Filter all levels in the range, sorted by level descending
       const matches = (
         cachedPokemon.level_up_moves as { moveId: number; level: number }[]
@@ -479,91 +477,102 @@ export async function learnMovesOnLevelUp(
         .filter((m) => m.level >= (fromLevel ?? 1) && m.level <= newLevel)
         .sort((a, b) => b.level - a.level);
 
-      // Return the first one the Pokemon doesn't know yet
+      const foundMoves: import("../types/game.types").ActiveMove[] = [];
+
+      // Find all moves the Pokemon doesn't know yet
       for (const match of matches) {
         if (pokemon.moves.some((m) => m.moveId === match.moveId)) continue;
+        if (foundMoves.some((m) => m.moveId === match.moveId)) continue;
 
         const { data: md } = await supabase
-          .from("move_cache")
+          .from("moves")
           .select("*")
-          .eq("move_id", match.moveId)
+          .eq("id", match.moveId)
           .maybeSingle();
 
-        if (!md) continue;
-
-        return {
-          moveId: md.move_id,
-          moveName: md.name_es,
-          type: md.type,
-          category: md.category,
-          power: md.power,
-          accuracy: md.accuracy ?? 100,
-          currentPP: md.pp,
-          maxPP: md.pp,
-          priority: md.priority ?? 0,
-          enabled: true,
-          statusEffect: md.ailment
-            ? { condition: md.ailment as any, chance: md.ailment_chance ?? 100 }
-            : undefined,
-          selfBoost: COMMON_SELF_BOOSTS[md.move_id] as any,
-        };
+        if (md) {
+          foundMoves.push({
+            moveId: md.id,
+            moveName: md.name,
+            type: md.type,
+            category: md.category as any,
+            power: md.power,
+            accuracy: md.accuracy ?? 100,
+            currentPP: md.pp,
+            maxPP: md.pp,
+            priority: md.priority ?? 0,
+            enabled: true,
+            statusEffect: md.ailment
+              ? {
+                  condition: md.ailment as any,
+                  chance: md.ailment_chance ?? 100,
+                }
+              : undefined,
+            selfBoost: COMMON_SELF_BOOSTS[md.id] as any,
+          });
+        }
       }
-      return null;
+      return foundMoves;
     }
 
     // Fallback to PokeAPI
     const data = await fetchJson(`${API_BASE}/pokemon/${pokemon.pokemonId}`);
 
-    // Find moves learned exactly at this new level
+    // Find moves learned in the range
     const newMoveCandidates = data.moves.filter((m: any) =>
-      m.version_group_details.some(
-        (v: any) =>
-          v.move_learn_method.name === "level-up" &&
-          v.level_learned_at === newLevel,
-      ),
+      m.version_group_details.some((v: any) => {
+        const learnLevel = v.level_learned_at;
+        const methodMatch = v.move_learn_method.name === "level-up";
+        const levelMatch =
+          learnLevel >= (fromLevel ?? 1) && learnLevel <= newLevel;
+        return methodMatch && levelMatch;
+      }),
     );
 
-    if (newMoveCandidates.length === 0) return null;
+    if (newMoveCandidates.length === 0) return [];
 
-    // Only take the first new move to avoid too many API calls
-    const candidate = newMoveCandidates[0];
-    const md = await fetchJson(candidate.move.url);
+    const foundMoves: import("../types/game.types").ActiveMove[] = [];
 
-    // Check if we already have this move
-    if (pokemon.moves.some((m) => m.moveId === md.id)) return null;
+    for (const candidate of newMoveCandidates) {
+      const md = await fetchJson(candidate.move.url);
 
-    const moveName =
-      md.names.find((n: any) => n.language.name === "es")?.name ?? md.name;
+      // Check if we already have this move
+      if (pokemon.moves.some((m) => m.moveId === md.id)) continue;
+      if (foundMoves.some((m) => m.moveId === md.id)) continue;
 
-    let statusEffect = undefined;
-    if (md.meta && md.meta.ailment && md.meta.ailment.name !== "none") {
-      const condition = mapAilment(md.meta.ailment.name);
-      if (condition) {
-        statusEffect = {
-          condition,
-          chance: md.meta.ailment_chance || 100,
-        };
+      const moveName =
+        md.names.find((n: any) => n.language.name === "es")?.name ?? md.name;
+
+      let statusEffect = undefined;
+      if (md.meta && md.meta.ailment && md.meta.ailment.name !== "none") {
+        const condition = mapAilment(md.meta.ailment.name);
+        if (condition) {
+          statusEffect = {
+            condition,
+            chance: md.meta.ailment_chance || 100,
+          };
+        }
       }
+
+      foundMoves.push({
+        moveId: md.id,
+        moveName,
+        type: md.type.name,
+        category: md.damage_class.name as any,
+        power: md.power,
+        accuracy: md.accuracy || 100,
+        currentPP: md.pp || 10,
+        maxPP: md.pp || 10,
+        priority: md.priority || 0,
+        enabled: true,
+        statusEffect,
+        selfBoost: COMMON_SELF_BOOSTS[md.id] as any,
+      });
     }
 
-    const newMove: import("../types/game.types").ActiveMove = {
-      moveId: md.id,
-      moveName,
-      type: md.type.name,
-      category: md.damage_class.name,
-      power: md.power,
-      accuracy: md.accuracy || 100,
-      currentPP: md.pp || 10,
-      maxPP: md.pp || 10,
-      priority: md.priority || 0,
-      enabled: true,
-      statusEffect,
-      selfBoost: COMMON_SELF_BOOSTS[md.id] as any,
-    };
-
-    return newMove;
+    return foundMoves;
   } catch {
-    return null;
+    return [];
   }
 }
 

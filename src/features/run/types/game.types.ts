@@ -267,6 +267,7 @@ export interface RunState {
 
   pendingLootSelection: string[] | null;
   pendingMoveLearn: MoveLearnData | null;
+  pendingMoveLearnQueue?: MoveLearnData[] | null;
   pendingEvolution: EvolutionData | null;
   pendingMegaEvolution: PendingMegaEvolution | null;
   pendingZoneTransition: boolean;

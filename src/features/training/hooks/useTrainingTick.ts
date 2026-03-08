@@ -242,21 +242,24 @@ export function useTrainingTick() {
 
           // Async move learning
           const currentLvl = leveledPokemon.level;
-          learnMovesOnLevelUp(leveledPokemon, currentLvl).then((newMove) => {
-            if (newMove) {
+          learnMovesOnLevelUp(leveledPokemon, currentLvl).then((newMoves) => {
+            if (newMoves.length > 0) {
               setTraining((prev) => {
-                const updatedMoves = [...prev.pokemon.moves, newMove];
-                if (updatedMoves.length > 4) {
-                  updatedMoves.shift();
+                let updatedMoves = [...prev.pokemon.moves];
+                for (const move of newMoves) {
+                  // Prevenir duplicados locales (aunque learnMovesOnLevelUp ya debería filtrarlos)
+                  if (!updatedMoves.some(m => m.moveId === move.moveId)) {
+                    updatedMoves.push(move);
+                    if (updatedMoves.length > 4) {
+                      updatedMoves.shift();
+                    }
+                  }
                 }
                 return {
                   ...prev,
                   pokemon: { ...prev.pokemon, moves: updatedMoves },
                 };
               });
-              setMeta((prev) => ({
-                ...prev,
-              }));
             }
           });
         }
