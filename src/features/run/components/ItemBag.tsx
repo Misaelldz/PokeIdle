@@ -29,16 +29,19 @@ export function ItemBag() {
     const itemDef = ITEMS[useTargetModal];
     if (!itemDef) return;
 
+    // ── BLOQUEO TM — verificar ANTES de cualquier cosa ──
     if (itemDef.category === "tm") {
-      const moveId = itemDef.effect.type === "teach" ? itemDef.effect.moveId : 0;
-      const canLearn = await canLearnTM(pokemon.pokemonId, moveId);
-      if (!canLearn) {
+      const compatible = tmCompatibility[pokemon.uid];
+      if (compatible === false) {
         notify({ 
           message: `${pokemon.name} no puede aprender ${itemDef.name}.`, 
           type: "defeat", 
           icon: "❌", 
           duration: 2500 
         });
+        return; // ← salir SIN consumir el item
+      }
+      if (compatible === undefined || loadingCompatibility) {
         return;
       }
     }
@@ -366,9 +369,10 @@ export function ItemBag() {
               </span>
               {run.team.map((p) => {
                 const item = useTargetModal ? ITEMS[useTargetModal] : null;
-                const isTmIncompatible = item?.category === "tm" && 
-                  tmCompatibility[p.uid] !== undefined && 
-                  tmCompatibility[p.uid] === false;
+                const isTmIncompatible = item?.category === "tm" && (
+                  loadingCompatibility || 
+                  (tmCompatibility[p.uid] !== undefined && tmCompatibility[p.uid] === false)
+                );
 
                 return (
                   <button
