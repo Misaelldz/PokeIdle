@@ -100,11 +100,14 @@ export function EvolutionModal() {
       };
 
       // Trigger move learning check for the newly evolved pokemon at its current level
-      (next as any).__checkMoveLearnAt = {
-        pokemonUid: pending.pokemonUid,
-        level: evolvedPokemon.level,
-        fromLevel: 1, // check all moves from level 1 to current level
-      };
+      (next as any).__checkMoveLearnQueue = [
+        ...((next as any).__checkMoveLearnQueue || []),
+        {
+          pokemonUid: pending.pokemonUid,
+          level: evolvedPokemon.level,
+          fromLevel: 1, // check all moves from level 1 to current level
+        }
+      ];
 
       return next;
     });

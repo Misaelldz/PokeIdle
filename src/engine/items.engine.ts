@@ -264,12 +264,14 @@ export async function useItemOnPokemon(
 
     // Set XP to next level and level up
     // console.log(`[RARE CANDY] Using on ${nextPokemon.name}. Current Level: ${nextPokemon.level}`);
+    const oldLevel = nextPokemon.level;
     nextPokemon.xp = xpToNextLevel(nextPokemon.level);
     nextPokemon = levelUpPokemon(nextPokemon);
 
     applied = true;
     resultMsg = `¡${nextPokemon.name} subió al nivel ${nextPokemon.level}!`;
     // console.log(`[RARE CANDY] New Level: ${nextPokemon.level}. Applied: ${applied}`);
+    (nextPokemon as any).__rareCandyFromLevel = oldLevel;
   } else if (itemDef.category === "evo") {
     // Evolution logic
     try {
@@ -467,6 +469,9 @@ export async function useItemOnPokemon(
 
     // Rare Candy automatic markers (if not already set by stones)
     if (itemId === "rare-candy" && !runStateMarkers) {
+      const fromLevel = (nextPokemon as any).__rareCandyFromLevel;
+      delete (nextPokemon as any).__rareCandyFromLevel;
+      
       // console.log(`[RARE CANDY] Generating markers for ${nextPokemon.name} (UID: ${nextPokemon.uid})`);
       runStateMarkers = {
         __checkEvolutionQueue: [
@@ -480,6 +485,7 @@ export async function useItemOnPokemon(
           {
             pokemonUid: nextPokemon.uid,
             level: nextPokemon.level,
+            fromLevel: fromLevel,
           },
         ],
       };

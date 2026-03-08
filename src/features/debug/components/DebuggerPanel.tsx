@@ -222,6 +222,7 @@ export function DebuggerPanel() {
     // 1. Level up synchronously and update state
     let leveledPokemon: (typeof run.team)[0] | null = null;
     let lastLevel = 0;
+    let oldLevel = 0;
 
     setRun((prev) => {
       const team = [...prev.team];
@@ -229,6 +230,7 @@ export function DebuggerPanel() {
       if (idx === -1) return prev;
 
       let pokemon = { ...team[idx] };
+      oldLevel = pokemon.level;
       lastLevel = pokemon.level;
 
       for (let i = 0; i < times; i++) {
@@ -264,17 +266,26 @@ export function DebuggerPanel() {
           },
         ].slice(-40),
       };
-      (next as any).__checkMoveLearnAt = {
-        pokemonUid: uid,
-        level: lastLevel,
-        _nonce: Date.now(),
-      };
-      (next as any).__checkEvolutionAt = {
-        pokemonUid: uid,
-        level: lastLevel,
-        pokemonId: pokemon.pokemonId,
-        _nonce: Date.now(),
-      };
+
+      // Add to queues
+      (next as any).__checkMoveLearnQueue = [
+        ...((next as any).__checkMoveLearnQueue || []),
+        {
+          pokemonUid: uid,
+          level: lastLevel,
+          fromLevel: oldLevel,
+        }
+      ];
+
+      (next as any).__checkEvolutionQueue = [
+        ...((next as any).__checkEvolutionQueue || []),
+        {
+          pokemonUid: uid,
+          level: lastLevel,
+          pokemonId: pokemon.pokemonId,
+        }
+      ];
+
       return next;
     });
 
