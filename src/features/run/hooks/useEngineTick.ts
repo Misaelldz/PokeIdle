@@ -82,6 +82,29 @@ export function useEngineTick() {
     }
   }, [run.currentBattle?.turnState]);
 
+  // Load region data
+  useEffect(() => {
+    let active = true;
+    fetchingRef.current = true;
+
+    Promise.all([
+      getZonesForRegion(run.currentRegion),
+      getGymsForRegion(run.currentRegion),
+      getEliteFourForRegion(run.currentRegion),
+    ]).then(([zones, gyms, e4]) => {
+      if (!active) return;
+      setRegionZones(zones);
+      setRegionGyms(gyms);
+      setRegionEliteFour(e4);
+      fetchingRef.current = false;
+    }).catch(err => {
+      console.error("[useEngineTick] Failed to load region data", err);
+      if (active) fetchingRef.current = false;
+    });
+
+    return () => { active = false; };
+  }, [run.currentRegion]);
+
   const tick = async () => {
     if (
       !run.isActive ||
@@ -281,7 +304,9 @@ export function useEngineTick() {
           }
 
           const requiredBattles = currentZone.isGym ? (currentZone.trainerCount ?? 0) : (currentZone.trainerCount || 3);
-          const isBossTime = run.zoneBattlesWon >= requiredBattles;
+          // For gyms with no wild encounters, we should jump straight to the boss
+          const hasEncounters = (currentZone.wildPokemon?.length ?? 0) > 0;
+          const isBossTime = (currentZone.isGym && !hasEncounters) || run.zoneBattlesWon >= requiredBattles;
           let enemy;
           let isBoss = false;
           let activeMechanic:
