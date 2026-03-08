@@ -95,6 +95,10 @@ export function useEngineTick() {
       return;
 
     const currentZone = regionZones[run.currentZoneIndex];
+    if (regionZones.length === 0 || (!currentZone && !run.eliteFourProgress)) {
+      // Zones not loaded yet, wait
+      return;
+    }
     if (currentZone?.isGym && regionGyms.length === 0) {
       // Gyms not loaded yet, wait
       return;
@@ -268,6 +272,11 @@ export function useEngineTick() {
             // Actually, for simplicity, I'll add a helper call or just use a simpler method.
             // But setRun is async. Best is to handle it inside setRun or in the idle state turnCount 0.
             // Wait, turnCount 0 is a good place.
+            return;
+          }
+
+          if (!currentZone) {
+            fetchingRef.current = false;
             return;
           }
 
