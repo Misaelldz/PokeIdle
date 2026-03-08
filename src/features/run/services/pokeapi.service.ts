@@ -16,10 +16,13 @@ import {
   isLegendaryOrMythical,
   canAppearInWild,
   getLegendaryCategory,
+  PARADOX_IDS,
 } from "../../../lib/legendaries";
 import { supabase } from "../../../lib/supabase";
 
 const API_BASE = "https://pokeapi.co/api/v2";
+
+let _basePokemonPool: number[] | null = null;
 
 export const COMMON_SELF_BOOSTS: Record<number, { stat: string; stages: number }[]> = {
   14: [{ stat: "atk", stages: 2 }], // Swords Dance (Danza Espada)
@@ -749,5 +752,37 @@ export async function canLearnTM(
     return (data.tm_moves as number[]).includes(moveId);
   } catch {
     return false;
+  }
+}
+
+/**
+ * Fetches the base Pokémon pool from Supabase (Pokémon that don't evolve from anything).
+ * Excludes legendaries, mythicals, and paradox to maintain their specific gacha rates.
+ */
+export async function fetchBasePokemonPool(): Promise<number[]> {
+  if (_basePokemonPool) return _basePokemonPool;
+
+  try {
+    const { data, error } = await supabase
+      .from("species_cache")
+      .select("pokemon_id")
+      .is("evolves_from_id", null)
+      .eq("is_legendary", false)
+      .eq("is_mythical", false);
+
+    if (error) throw error;
+    if (!data) return [];
+
+    // Filter out Paradox IDs from the base pool to keep them rare (Gacha has 2.3% for them)
+    const filtered = data
+      .map((d: any) => d.pokemon_id)
+      .filter(id => !PARADOX_IDS.has(id));
+
+    _basePokemonPool = filtered;
+    return _basePokemonPool;
+  } catch (e) {
+    console.error("[fetchBasePokemonPool] Failed, falling back to a safe list", e);
+    // Fallback to traditional starters if Supabase fails
+    return [1, 4, 7, 152, 155, 158, 252, 255, 258, 387, 390, 393, 495, 498, 501, 650, 653, 656, 722, 725, 728, 810, 813, 816, 906, 909, 912];
   }
 }

@@ -1,17 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGame } from "../../../context/GameContext";
 import {
   getFrontSprite,
   getPokemonData,
   fetchEggMoves,
   isStarterMaterial,
+  fetchBasePokemonPool,
 } from "../../run/services/pokeapi.service";
 import {
   generateRandomIVs,
   getRandomNature,
 } from "../../../engine/stats.engine";
 import { Coins, Sparkles, Wand2, X, Star, Zap } from "lucide-react";
-import { GACHA_LEGENDARY_POOL, isGachaEligible } from "../../../lib/legendaries";
+import {
+  isLegendaryOrMythical,
+  getLegendaryCategory,
+  GACHA_LEGENDARY_POOL,
+  MYTHICAL_IDS,
+  PARADOX_IDS,
+} from "../../../lib/legendaries";
+import { getDailyLegendaries } from "../../../lib/gacha.utils";
 
 // ── TYPES ────────────────────────────────────────────────────────────────────
 interface Banner {
@@ -24,19 +32,29 @@ interface Banner {
 
 // ── CONSTANTS ────────────────────────────────────────────────────────────────
 const BANNERS: Banner[] = [
-  { id: "sea", name: "Guardianes del Mar", featuredId: 249, color: "#4A90E2" },
-  { id: "sky", name: "Soberanos del Cielo", featuredId: 384, color: "#50E3C2" },
   {
-    id: "origin",
-    name: "Distorsión de Origen",
-    featuredId: 487,
-    color: "#9013FE",
+    id: "daily-1",
+    name: "Carga Legendaria I",
+    featuredId: 0,
+    color: "from-blue-600 to-cyan-400",
+  },
+  {
+    id: "daily-2",
+    name: "Carga Legendaria II",
+    featuredId: 0,
+    color: "from-emerald-600 to-lime-400",
+  },
+  {
+    id: "daily-3",
+    name: "Carga Legendaria III",
+    featuredId: 0,
+    color: "from-purple-700 to-slate-900",
   },
   {
     id: "shiny",
-    name: "Brillo Estelar",
+    name: "Festival Variocolor",
     featuredId: 0,
-    color: "#FFD700",
+    color: "from-amber-400 via-yellow-200 to-amber-400",
     isShinyBanner: true,
   },
 ];
@@ -46,11 +64,14 @@ const PERMANENT_LEGENDARIES = GACHA_LEGENDARY_POOL;
 
 const GACHA_COST = 0;
 const FEATURED_RATE = 0.01; // 1.0% for the featured legendary
-const PERMANENT_RATE = 0.006; // 0.6% for a permanent pool legendary
+const PERMANENT_RATE = 0.005; // 0.5% for a permanent pool legendary
+const MYTHICAL_RATE = 0.002; // 0.2% for mythical
+const PARADOX_RATE = 0.023; // 2.3% for paradox
 const PITY_THRESHOLD = 100;
 const SHINY_RATE_NORMAL = 0.01; // 1%
 const SHINY_RATE_BOOSTED = 0.05; // 5%
-const SHINY_BANNER_LEGENDARY_RATE = 0.002; // 0.2%
+const SHINY_BANNER_LEGENDARY_RATE = 0.005; // 0.5% (Legendary/Mythical)
+const SHINY_BANNER_PARADOX_RATE = 0.025; // 2.5% (Paradox)
 const EGG_MOVE_RATE = 0.2;
 
 interface Props {
@@ -143,23 +164,61 @@ function GachaSprite({
 
 export function GachaView({ onBack }: Props) {
   const { meta, setMeta, notify } = useGame();
-  const [selectedBanner, setSelectedBanner] = useState<Banner>(BANNERS[0]);
-  const [isPulling, setIsPulling] = useState(false);
-  const [pullResults, setPullResults] = useState<PullResultData[]>([]);
+  const [activeBanner, setActiveBanner] = useState<Banner>(BANNERS[0]);
+  const [pulling, setPulling] = useState(false);
+  const [results, setResults] = useState<PullResultData[]>([]);
+  const [basePool, setBasePool] = useState<number[]>([]);
+  const [dynamicBanners, setDynamicBanners] = useState<Banner[]>(BANNERS);
 
-  const currentPity = meta.gachaPity?.[selectedBanner.id] || 0;
+  // Setup Daily Banners and Pool
+  useEffect(() => {
+    const setup = async () => {
+      const dailyIds = getDailyLegendaries(GACHA_LEGENDARY_POOL, 3);
+      
+      const updatedBanners = [...BANNERS];
+      for (let i = 0; i < 3; i++) {
+        const id = dailyIds[i] || 150;
+        let pName = "Legendario";
+        try {
+          const pkmn = await getPokemonData(id, 1);
+          pName = pkmn.name;
+        } catch {}
+        
+        updatedBanners[i] = {
+          ...updatedBanners[i],
+          featuredId: id,
+          name: `Poder de ${pName}`,
+        };
+      }
+      
+      setDynamicBanners(updatedBanners);
+
+      // Initialize active banner correctly
+      if (activeBanner.id.startsWith("daily-")) {
+        const index = parseInt(activeBanner.id.split("-")[1]) - 1;
+        setActiveBanner(updatedBanners[index]);
+      }
+
+      const pool = await fetchBasePokemonPool();
+      setBasePool(pool);
+    };
+
+    setup();
+  }, []);
+
+  const currentPity = meta.gachaPity?.[activeBanner.id] || 0;
   const pullsUntilPity = PITY_THRESHOLD - currentPity;
   const costX10 = GACHA_COST * 9;
 
   const handlePull = async (count: number) => {
     const totalCost = count === 10 ? costX10 : GACHA_COST * count;
-    if (meta.pokeCoins < totalCost || isPulling) return;
+    if (meta.pokeCoins < totalCost || pulling) return;
 
-    setIsPulling(true);
-    setPullResults([]);
+    setPulling(true);
+    setResults([]);
 
     try {
-      const banner = selectedBanner;
+      const banner = activeBanner;
       const isShinyBanner = !!banner.isShinyBanner;
       const shinyRate = isShinyBanner ? SHINY_RATE_BOOSTED : SHINY_RATE_NORMAL;
 
@@ -178,52 +237,65 @@ export function GachaView({ onBack }: Props) {
           if (pity >= PITY_THRESHOLD) {
             isLegendary = true;
             pity = 0;
-            // Pity gives featured
             if (banner.featuredId > 0) {
               pulledId = banner.featuredId;
               isFeatured = true;
             } else {
-              const pool = PERMANENT_LEGENDARIES;
-              pulledId = pool[Math.floor(Math.random() * pool.length)];
+              pulledId = PERMANENT_LEGENDARIES[Math.floor(Math.random() * PERMANENT_LEGENDARIES.length)];
             }
           } else {
-            // ── Featured roll: 1.0% ──
-            if (Math.random() < FEATURED_RATE && banner.featuredId > 0) {
+            const rng = Math.random();
+            // 1. Featured Legendary (1.0%)
+            if (rng < FEATURED_RATE && banner.featuredId > 0) {
               pulledId = banner.featuredId;
               isLegendary = true;
               isFeatured = true;
               pity = 0;
-            }
-            // ── Permanent pool roll: 0.6% ──
-            else if (Math.random() < PERMANENT_RATE) {
-              const pool = PERMANENT_LEGENDARIES.filter(
-                (id) => id !== banner.featuredId,
-              );
+            } 
+            // 2. Permanent Legendary (0.5%)
+            else if (rng < FEATURED_RATE + PERMANENT_RATE) {
+              const pool = PERMANENT_LEGENDARIES.filter(id => id !== banner.featuredId);
               pulledId = pool[Math.floor(Math.random() * pool.length)];
               isLegendary = true;
               pity = 0;
             }
+            // 3. Mythical (0.2%)
+            else if (rng < FEATURED_RATE + PERMANENT_RATE + MYTHICAL_RATE) {
+              const pool = Array.from(MYTHICAL_IDS);
+              pulledId = pool[Math.floor(Math.random() * pool.length)];
+              isLegendary = true; // Treated as highest tier
+              pity = 0;
+            }
+            // 4. Paradox (2.3%)
+            else if (rng < FEATURED_RATE + PERMANENT_RATE + MYTHICAL_RATE + PARADOX_RATE) {
+              const pool = Array.from(PARADOX_IDS);
+              pulledId = pool[Math.floor(Math.random() * pool.length)];
+            }
           }
         } else {
-          // ── Shiny Banner: Legendary roll at 0.2% ──
-          if (Math.random() < SHINY_BANNER_LEGENDARY_RATE) {
-            const pool = PERMANENT_LEGENDARIES;
+          // ── Shiny Banner ──
+          const rng = Math.random();
+          // Legendaries/Mythicals (0.5%)
+          if (rng < SHINY_BANNER_LEGENDARY_RATE) {
+            const pool = [...PERMANENT_LEGENDARIES, ...Array.from(MYTHICAL_IDS)];
             pulledId = pool[Math.floor(Math.random() * pool.length)];
             isLegendary = true;
+          }
+          // Paradox (2.5%)
+          else if (rng < SHINY_BANNER_LEGENDARY_RATE + SHINY_BANNER_PARADOX_RATE) {
+            const pool = Array.from(PARADOX_IDS);
+            pulledId = pool[Math.floor(Math.random() * pool.length)];
           }
         }
 
         // ── Normal Pokémon roll ──
         if (pulledId === -1) {
-          let attempts = 0;
-          while (pulledId === -1 && attempts < 15) {
-            const candidateId = Math.floor(Math.random() * 1025) + 1;
-            if (await isStarterMaterial(candidateId)) {
-              pulledId = candidateId;
-            }
-            attempts++;
+          if (basePool.length > 0) {
+            pulledId = basePool[Math.floor(Math.random() * basePool.length)];
+          } else {
+            // In case pool fetch failed, use a very basic fallback (Bulbasaur)
+            pulledId = 1;
           }
-          if (pulledId === -1) pulledId = Math.floor(Math.random() * 151) + 1;
         }
 
         // ── Shiny roll ──
@@ -341,7 +413,7 @@ export function GachaView({ onBack }: Props) {
         };
       });
 
-      setPullResults(displayResults);
+      setResults(displayResults);
     } catch (err) {
       console.error(err);
       notify({
@@ -351,7 +423,7 @@ export function GachaView({ onBack }: Props) {
         duration: 3000,
       });
     } finally {
-      setIsPulling(false);
+      setPulling(false);
     }
   };
 
@@ -382,11 +454,11 @@ export function GachaView({ onBack }: Props) {
       <div className="flex-1 flex flex-col items-center p-4 overflow-y-auto custom-scrollbar">
         {/* Banner Selection */}
         <div className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          {BANNERS.map((banner) => (
+          {dynamicBanners.map((banner) => (
             <button
               key={banner.id}
-              onClick={() => setSelectedBanner(banner)}
-              className={`relative overflow-hidden group border-4 transition-all ${selectedBanner.id === banner.id
+              onClick={() => setActiveBanner(banner)}
+              className={`relative overflow-hidden group border-4 transition-all ${activeBanner.id === banner.id
                 ? "border-brand scale-105 shadow-pixel"
                 : "border-border opacity-60 hover:opacity-100"
                 }`}
@@ -418,7 +490,7 @@ export function GachaView({ onBack }: Props) {
                     {banner.name.toUpperCase()}
                   </span>
                 </div>
-                {selectedBanner.id === banner.id && (
+                {activeBanner.id === banner.id && (
                   <div className="absolute top-1 right-1">
                     <Sparkles size={10} className="text-accent animate-pulse" />
                   </div>
@@ -429,7 +501,7 @@ export function GachaView({ onBack }: Props) {
         </div>
 
         {/* Pity Counter */}
-        {!selectedBanner.isShinyBanner && (
+        {!activeBanner.isShinyBanner && (
           <div className="flex items-center gap-2 mb-4 bg-surface-dark border-2 border-border px-4 py-2">
             <Zap size={14} className="text-accent" />
             <span className="font-display text-[0.6rem] text-subtitle">
@@ -451,28 +523,28 @@ export function GachaView({ onBack }: Props) {
         <div className="flex flex-col sm:flex-row items-center gap-4 mt-auto mb-6">
           <button
             onClick={() => handlePull(1)}
-            disabled={isPulling || !canAfford1}
-            className={`relative py-5 px-10 border-4 font-display text-sm tracking-[0.2em] transition-all ${canAfford1 && !isPulling
+            disabled={pulling || !canAfford1}
+            className={`relative py-5 px-10 border-4 font-display text-sm tracking-[0.2em] transition-all ${canAfford1 && !pulling
               ? "bg-brand border-brand-dark text-white hover:scale-105 active:scale-95 shadow-pixel"
               : "bg-surface-dark border-border text-muted cursor-not-allowed"
               }`}
           >
-            {isPulling ? "INVOCANDO..." : `INVOCAR ×1 (${GACHA_COST} 💰)`}
+            {pulling ? "INVOCANDO..." : `INVOCAR ×1 (${GACHA_COST} 💰)`}
           </button>
 
           <button
             onClick={() => handlePull(10)}
-            disabled={isPulling || !canAfford10}
-            className={`relative py-5 px-10 border-4 font-display text-sm tracking-[0.2em] transition-all ${canAfford10 && !isPulling
+            disabled={pulling || !canAfford10}
+            className={`relative py-5 px-10 border-4 font-display text-sm tracking-[0.2em] transition-all ${canAfford10 && !pulling
               ? "bg-linear-to-r from-brand to-purple-600 border-brand-dark text-white hover:scale-105 active:scale-95 shadow-pixel"
               : "bg-surface-dark border-border text-muted cursor-not-allowed"
               }`}
           >
             <div className="flex flex-col items-center">
               <span>
-                {isPulling ? "INVOCANDO..." : `INVOCAR ×10 (${costX10} 💰)`}
+                {pulling ? "INVOCANDO..." : `INVOCAR ×10 (${costX10} 💰)`}
               </span>
-              {!isPulling && (
+              {!pulling && (
                 <span className="text-[0.45rem] text-accent mt-0.5">
                   ¡1 GRATIS!
                 </span>
@@ -483,19 +555,22 @@ export function GachaView({ onBack }: Props) {
 
         {/* Rate Info */}
         <div className="text-[0.7rem] font-display italic text-center max-w-md leading-relaxed mb-4">
-          {selectedBanner.isShinyBanner ? (
+          {activeBanner.isShinyBanner ? (
             <>
-              * Legendarios disponibles (
-              <span className="text-accent">0.2%</span>) siempre Shiny. <br />*{" "}
+              * Legendarios y Míticos destacados (
+              <span className="text-accent">0.5%</span>) siempre Shiny. <br />
+              * Pokémon Paradoja (<span className="text-accent">2.5%</span>). <br />*{" "}
               <span className="text-accent">5%</span> de prob. variocolor
-              (Shiny) en normales. <br />* 20% de prob. de movimiento huevo.
+              (Shiny) general. <br />* 20% de prob. de movimiento huevo.
             </>
           ) : (
             <>
               * <span className="text-accent">1.0%</span> de prob. legendario
-              destacado. <br />* <span className="text-accent">0.6%</span> de
-              prob. legendario permanente. <br />
-              * Garantizado a las 100 tiradas (pity). <br />
+              destacado. <br />
+              * <span className="text-accent">0.5%</span> de legendario permanente. <br />
+              * <span className="text-accent">0.2%</span> de mítico. <br />
+              * <span className="text-accent">2.3%</span> de Pokémon Paradoja. <br />
+              * Garantía a las 100 tiradas (pity). <br />
               * 1% de prob. variocolor (Shiny). <br />* 20% de prob. de
               movimiento huevo.
             </>
@@ -504,27 +579,27 @@ export function GachaView({ onBack }: Props) {
       </div>
 
       {/* ── PULL RESULT OVERLAY ── */}
-      {(isPulling || pullResults.length > 0) && (
+      {(pulling || results.length > 0) && (
         <div className="fixed inset-0 z-70 bg-black/95 flex flex-col items-center justify-center p-4 overflow-y-auto">
-          {isPulling ? (
+          {pulling ? (
             <div className="flex flex-col items-center gap-8">
               <div className="w-32 h-32 border-8 border-brand border-t-accent rounded-full animate-spin shadow-[0_0_50px_rgba(255,215,0,0.3)]" />
               <h3 className="font-display text-2xl animate-pulse tracking-widest text-brand">
                 CANALIZANDO ENERGÍA...
               </h3>
             </div>
-          ) : pullResults.length === 1 ? (
+          ) : results.length === 1 ? (
             <SinglePullCard
-              result={pullResults[0]}
-              onConfirm={() => setPullResults([])}
+              result={results[0]}
+              onConfirm={() => setResults([])}
             />
           ) : (
             <div className="w-full max-w-4xl flex flex-col items-center gap-6 animate-in zoom-in-90 duration-300 py-10">
               <h3 className="font-display text-xl tracking-widest text-brand">
-                RESULTADOS ×{pullResults.length}
+                RESULTADOS ×{results.length}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 w-full">
-                {pullResults.map((r, i) => (
+                {results.map((r, i) => (
                   <div
                     key={i}
                     className={`bg-surface-dark border-2 p-3 flex flex-col items-center gap-2 transition-all ${r.isLegendary
@@ -577,7 +652,7 @@ export function GachaView({ onBack }: Props) {
                 ))}
               </div>
               <button
-                onClick={() => setPullResults([])}
+                onClick={() => setResults([])}
                 className="w-full max-w-xs py-3 bg-brand text-white font-display text-[0.7rem] tracking-widest hover:bg-brand-dark transition-all mt-2"
               >
                 CONFIRMAR
