@@ -579,6 +579,35 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
                         : "opacity-100 translate-x-0",
                     )}
                     style={{ imageRendering: "pixelated" }}
+                    onLoad={() => {
+                      if (!battle?.enemyReady) {
+                        setRun((prev: any) => {
+                          if (!prev.currentBattle) return prev;
+                          return {
+                            ...prev,
+                            currentBattle: {
+                              ...prev.currentBattle,
+                              enemyReady: true,
+                            },
+                          };
+                        });
+                      }
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                      if (!battle?.enemyReady) {
+                        setRun((prev: any) => {
+                          if (!prev.currentBattle) return prev;
+                          return {
+                            ...prev,
+                            currentBattle: {
+                              ...prev.currentBattle,
+                              enemyReady: true,
+                            },
+                          };
+                        });
+                      }
+                    }}
                   />
                 ) : (
                   <PixelSprite

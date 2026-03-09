@@ -3547,7 +3547,7 @@ export const ITEMS: Record<string, Item> = {
     description:
       "Enseña Espada Santa. Ataque que ignora los cambios en las estadísticas del rival.",
     category: "tm",
-    effect: { type: "teach", moveId: 527, moveName: "Espada Santa" },
+    effect: { type: "teach", moveId: 533, moveName: "Espada Santa" },
     buyable: true,
     lootable: true,
     shopPrice: 2500,
