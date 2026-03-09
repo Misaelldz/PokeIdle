@@ -211,8 +211,7 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
       
       setRun((prev: any) => ({ 
         ...prev, 
-        pendingGymDialogue: true, 
-        isPaused: true 
+        pendingGymDialogue: true
       }));
 
       // Timers for sequence
@@ -251,13 +250,13 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
               setRun((prev: any) => ({ ...prev, pendingGymCondition: true }));
               setShowConditionModal(true);
             } else {
-              setRun((prev: any) => ({ ...prev, isPaused: false, pendingGymDialogue: false }));
+              setRun((prev: any) => ({ ...prev, pendingGymDialogue: false }));
             }
           }
         } else {
            // No se encontró el gimnasio, asegurar limpieza
            setShowEnemyHP(true);
-           setRun((prev: any) => ({ ...prev, isPaused: false, pendingGymDialogue: false }));
+           setRun((prev: any) => ({ ...prev, pendingGymDialogue: false }));
         }
       });
 
@@ -342,7 +341,6 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
       setTimeout(() => setShowLeaderSprite(false), 500);
       setRun((prev: any) => ({ 
         ...prev, 
-        isPaused: false,
         pendingGymDialogue: false
       }));
       

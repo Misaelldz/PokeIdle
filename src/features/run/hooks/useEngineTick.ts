@@ -117,9 +117,6 @@ export function useEngineTick() {
       run.pendingZoneTransition ||
       (run as any).pendingGymCondition
     ) {
-      if (run.currentBattle) {
-        // console.log("[useEngineTick] Guard blocked:", { isPaused: run.isPaused, fetching: fetchingRef.current });
-      }
       return;
     }
 
@@ -603,6 +600,12 @@ export function useEngineTick() {
       if (!state.isActive || !state.currentBattle) return state;
 
       const bState = { ...state.currentBattle };
+      
+      // Bloquear turnos durante diálogo de gym intro
+      if ((state as any).pendingGymDialogue && bState.turnCount === 0) {
+        return state;
+      }
+
       const logs = [...state.battleLog];
 
       const actor = bState.turnQueue?.[0] || "";
