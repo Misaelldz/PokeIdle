@@ -195,12 +195,7 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
 
   // --- Gym Introduction Logic ---
   useEffect(() => {
-    if (
-      battle?.type === "gym" &&
-      battle.phase === "active" &&
-      battle.turnCount === 0 &&
-      !gymIntroDialogShownRef.current
-    ) {
+    if (run.pendingGymIntro && battle?.type === "gym" && !gymIntroDialogShownRef.current) {
       gymIntroDialogShownRef.current = true;
       gymVictoryDialogShownRef.current = false; // reset para nueva batalla
 
@@ -209,9 +204,11 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
       setLeaderSpriteOut(false);
       setShowEnemyHP(false);
       
+      // Limpiar el flag del engine inmediatamente y activar guard de diálogo
       setRun((prev: any) => ({ 
         ...prev, 
-        pendingGymDialogue: true
+        pendingGymIntro: false,
+        pendingGymDialogue: true, 
       }));
 
       // Timers for sequence
@@ -266,27 +263,24 @@ export function BattleView({ onMoveClick }: BattleViewProps) {
         if (dialogTimer) clearTimeout(dialogTimer);
       };
     }
-  }, [battle?.enemyPokemon?.uid, battle?.type, battle?.phase, run.currentRegion]);
 
-  // --- Utility state/logic cleanup ---
-  useEffect(() => {
     if (!battle) {
+      gymIntroDialogShownRef.current = false;
+      gymVictoryDialogShownRef.current = false;
       setCurrentGym(null);
       setGymDialogState(null);
       setShowConditionModal(false);
       setShowLeaderSprite(false);
       setLeaderSpriteOut(false);
       setShowEnemyHP(true);
-      gymIntroDialogShownRef.current = false;
-      gymVictoryDialogShownRef.current = false;
       setRun((prev: any) => ({ 
         ...prev, 
         pendingGymDialogue: false,
         pendingGymCondition: false,
-        isPaused: false
+        pendingGymIntro: false,
       }));
     }
-  }, [!!battle]);
+  }, [run.pendingGymIntro, battle?.type, !!battle, run.currentRegion]);
 
   // --- Gym Victory/Defeat Callbacks ---
   useEffect(() => {

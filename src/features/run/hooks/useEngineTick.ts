@@ -440,6 +440,7 @@ export function useEngineTick() {
                   battleType === "gym" && gymForBattle
                     ? gymForBattle.pokemon
                     : undefined,
+                pendingGymIntro: true,
               },
               battleLog: [
                 ...prev.battleLog,
@@ -602,7 +603,7 @@ export function useEngineTick() {
       const bState = { ...state.currentBattle };
       
       // Bloquear turnos durante diálogo de gym intro
-      if ((state as any).pendingGymDialogue && bState.turnCount === 0) {
+      if ((state as any).pendingGymIntro || (state as any).pendingGymDialogue) {
         return state;
       }
 

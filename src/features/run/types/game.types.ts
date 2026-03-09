@@ -274,6 +274,7 @@ export interface RunState {
   pendingZoneTransition: boolean;
   pendingGymDialogue: boolean;
   pendingGymCondition: boolean;
+  pendingGymIntro?: boolean;
   _eliteFourTransition?: boolean;
   pinnedItems: string[]; // slug
   inheritanceProgress: Record<number, InheritanceProgress>;
